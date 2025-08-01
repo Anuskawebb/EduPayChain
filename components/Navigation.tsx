@@ -1,0 +1,140 @@
+'use client';
+
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useWallet } from '../contexts/WalletContext';
+import { Wallet, GraduationCap, Users, Settings, Menu, X } from 'lucide-react';
+
+const Navigation: React.FC = () => {
+  const { isConnected, address, isAdmin, connect, disconnect, isLoading } = useWallet();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleWalletAction = async () => {
+    if (isConnected) {
+      disconnect();
+    } else {
+      await connect();
+    }
+  };
+
+  const formatAddress = (addr: string) => {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  return (
+    <nav className="bg-white shadow-lg border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          {/* Logo and Brand */}
+          <div className="flex items-center">
+            <Link href="/" className="flex items-center space-x-2">
+              <GraduationCap className="h-8 w-8 text-primary-600" />
+              <span className="text-xl font-bold gradient-text">EduPayChain</span>
+            </Link>
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            <Link 
+              href="/" 
+              className="text-gray-700 hover:text-primary-600 transition-colors duration-200"
+            >
+              Home
+            </Link>
+            <Link 
+              href="/student" 
+              className="text-gray-700 hover:text-primary-600 transition-colors duration-200"
+            >
+              Student Dashboard
+            </Link>
+            {isAdmin && (
+              <Link 
+                href="/admin" 
+                className="text-gray-700 hover:text-primary-600 transition-colors duration-200"
+              >
+                Admin Dashboard
+              </Link>
+            )}
+            <Link 
+              href="/universities" 
+              className="text-gray-700 hover:text-primary-600 transition-colors duration-200"
+            >
+              Universities
+            </Link>
+          </div>
+
+          {/* Wallet Connection */}
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={handleWalletAction}
+              disabled={isLoading}
+              className="flex items-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 disabled:opacity-50"
+            >
+              <Wallet className="h-4 w-4" />
+              <span>
+                {isLoading 
+                  ? 'Connecting...' 
+                  : isConnected 
+                    ? formatAddress(address!) 
+                    : 'Connect Wallet'
+                }
+              </span>
+            </button>
+
+            {/* Mobile menu button */}
+            <button
+              onClick={toggleMobileMenu}
+              className="md:hidden p-2 rounded-lg text-gray-700 hover:text-primary-600 hover:bg-gray-100"
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
+              <Link 
+                href="/" 
+                className="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Home
+              </Link>
+              <Link 
+                href="/student" 
+                className="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Student Dashboard
+              </Link>
+              {isAdmin && (
+                <Link 
+                  href="/admin" 
+                  className="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Admin Dashboard
+                </Link>
+              )}
+              <Link 
+                href="/universities" 
+                className="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Universities
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+};
+
+export default Navigation; 
