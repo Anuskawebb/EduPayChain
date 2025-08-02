@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '../../contexts/WalletContext';
-import { contractFunctions, formatEther, generateCertificateMetadata } from '../../utils/contract';
+import { contractFunctions, formatEther, generateCertificateMetadata, debugUniversitiesState } from '../../utils/contract';
 import { setupNotificationListeners } from '../../utils/notifications';
 import Navigation from '../../components/Navigation';
 import { 
@@ -74,31 +74,8 @@ const AdminDashboard: React.FC = () => {
         const unis = await contractFunctions.getUniversities();
         setUniversities(unis);
         
-        // Load sample students (in real app, you'd get this from contract)
-        // For demo purposes, we'll create mock data
-        const mockStudents: StudentInfo[] = [
-          {
-            address: '0x1234567890123456789012345678901234567890',
-            isRegistered: true,
-            university: 'MIT',
-            amountPaid: BigInt('1000000000000000000'), // 1 ETH
-            totalAmount: BigInt('1000000000000000000'), // 1 ETH
-            isVerified: false,
-            isRefunded: false,
-            certificateTokenId: BigInt(0)
-          },
-          {
-            address: '0x2345678901234567890123456789012345678901',
-            isRegistered: true,
-            university: 'Stanford',
-            amountPaid: BigInt('2000000000000000000'), // 2 ETH
-            totalAmount: BigInt('2000000000000000000'), // 2 ETH
-            isVerified: true,
-            isRefunded: false,
-            certificateTokenId: BigInt(1)
-          }
-        ];
-        setStudents(mockStudents);
+        // Start with empty students list - no mock data
+        setStudents([]);
       } catch (error) {
         console.error('Error loading data:', error);
       }
@@ -116,15 +93,15 @@ const AdminDashboard: React.FC = () => {
     setSuccess(null);
 
     try {
-      await contractFunctions.addUniversity(
-        signer,
+      const tx = await contractFunctions.addUniversity(
         universityName,
         universityAddress,
         universityCourse,
-        universityFee
+        universityFee,
+        signer
       );
       
-      setSuccess('University added successfully!');
+      setSuccess(`University added successfully! Transaction hash: ${tx.hash}. You can now view it in the Universities section.`);
       
       // Reset form
       setUniversityName('');
@@ -132,9 +109,19 @@ const AdminDashboard: React.FC = () => {
       setUniversityCourse('');
       setUniversityFee('');
       
+      // Debug the current state
+      await debugUniversitiesState();
+      
       // Reload universities
       const unis = await contractFunctions.getUniversities();
       setUniversities(unis);
+      
+      console.log('Universities after adding:', unis);
+      
+      // Dispatch custom event to notify other pages
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('universitiesUpdated'));
+      }
     } catch (error) {
       console.error('Error adding university:', error);
       setError(error instanceof Error ? error.message : 'Failed to add university');
@@ -152,12 +139,22 @@ const AdminDashboard: React.FC = () => {
     setSuccess(null);
 
     try {
-      await contractFunctions.removeUniversity(signer, universityAddress);
-      setSuccess('University removed successfully!');
+      await contractFunctions.removeUniversity(universityAddress, signer);
+      setSuccess('University removed successfully! The change will be reflected in the Universities section.');
+      
+      // Debug the current state
+      await debugUniversitiesState();
       
       // Reload universities
       const unis = await contractFunctions.getUniversities();
       setUniversities(unis);
+      
+      console.log('Universities after removing:', unis);
+      
+      // Dispatch custom event to notify other pages
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('universitiesUpdated'));
+      }
     } catch (error) {
       console.error('Error removing university:', error);
       setError(error instanceof Error ? error.message : 'Failed to remove university');
@@ -175,15 +172,7 @@ const AdminDashboard: React.FC = () => {
     setSuccess(null);
 
     try {
-      // Generate metadata
-      const metadata = generateCertificateMetadata(
-        studentName,
-        certificateCourse,
-        certificateUniversity,
-        new Date().toISOString()
-      );
-
-      await contractFunctions.verifyAndRelease(signer, selectedStudent, metadata);
+      await contractFunctions.verifyAndRelease(selectedStudent, certificateUniversity, signer);
       setSuccess('Payment verified and certificate issued successfully!');
       
       // Reset form
@@ -208,7 +197,9 @@ const AdminDashboard: React.FC = () => {
     setSuccess(null);
 
     try {
-      await contractFunctions.refund(signer, studentAddress);
+      // For demo purposes, we'll use a default university address
+      const defaultUniversity = '0x1234567890123456789012345678901234567890';
+      await contractFunctions.refund(studentAddress, defaultUniversity, signer);
       setSuccess('Payment refunded successfully!');
     } catch (error) {
       console.error('Error refunding payment:', error);
@@ -257,6 +248,8 @@ const AdminDashboard: React.FC = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
           <p className="text-gray-600">Manage universities, verify payments, and issue certificates</p>
+          
+
         </div>
 
         {/* Error/Success Messages */}

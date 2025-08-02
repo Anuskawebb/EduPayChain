@@ -2,17 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '../../contexts/WalletContext';
-import { contractFunctions, formatEther } from '../../utils/contract';
+import { contractFunctions, formatEther, isAdmin, debugUniversitiesState, testAddUniversity, setupUniversityEventListeners } from '../../utils/contract';
 import Navigation from '../../components/Navigation';
 import { 
   GraduationCap, 
   Building, 
-  MapPin, 
+  BookOpen, 
   DollarSign, 
-  BookOpen,
-  Trash2,
+  MapPin, 
+  Loader,
   Plus,
-  Loader
+  RefreshCw
 } from 'lucide-react';
 
 interface University {
@@ -23,10 +23,37 @@ interface University {
 }
 
 const UniversitiesPage: React.FC = () => {
-  const { isConnected, isAdmin } = useWallet();
+  const { isConnected, address } = useWallet();
   const [universities, setUniversities] = useState<University[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Check if user is admin
+  const userIsAdmin = address ? isAdmin(address) : false;
+
+  // Manual refresh function
+  const handleRefresh = async () => {
+    if (!isConnected) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Debug the current state
+      await debugUniversitiesState();
+      
+      const unis = await contractFunctions.getUniversities();
+      setUniversities(unis);
+      
+      console.log('Universities after refresh:', unis);
+    } catch (error) {
+      console.error('Error refreshing universities:', error);
+      setError('Failed to refresh universities');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Load universities
   useEffect(() => {
@@ -35,8 +62,14 @@ const UniversitiesPage: React.FC = () => {
 
       try {
         setIsLoading(true);
+        
+        // Debug the current state
+        await debugUniversitiesState();
+        
         const unis = await contractFunctions.getUniversities();
         setUniversities(unis);
+        
+        console.log('Universities loaded:', unis);
       } catch (error) {
         console.error('Error loading universities:', error);
         setError('Failed to load universities');
@@ -46,7 +79,22 @@ const UniversitiesPage: React.FC = () => {
     };
 
     loadUniversities();
-  }, [isConnected]);
+
+    // Setup smart contract event listeners
+    setupUniversityEventListeners(loadUniversities);
+
+    // Listen for custom event when universities are updated
+    const handleUniversitiesUpdated = () => {
+      loadUniversities();
+    };
+
+    window.addEventListener('universitiesUpdated', handleUniversitiesUpdated);
+
+    // Cleanup event listeners on unmount
+    return () => {
+      window.removeEventListener('universitiesUpdated', handleUniversitiesUpdated);
+    };
+  }, [isConnected, refreshKey]);
 
   if (!isConnected) {
     return (
@@ -68,9 +116,32 @@ const UniversitiesPage: React.FC = () => {
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Universities</h1>
-          <p className="text-gray-600">Browse approved universities and their course offerings</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Universities</h1>
+            <p className="text-gray-600">Browse approved universities and their course offerings</p>
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="btn-secondary flex items-center"
+              title="Refresh universities list"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              {isLoading ? 'Refreshing...' : 'Refresh'}
+            </button>
+            {userIsAdmin && (
+              <button
+                onClick={testAddUniversity}
+                className="btn-primary flex items-center"
+                title="Add test university"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Test Add
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Error Message */}
@@ -90,57 +161,74 @@ const UniversitiesPage: React.FC = () => {
 
         {/* Universities Grid */}
         {!isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {universities.map((university, index) => (
-              <div 
-                key={index}
-                className="bg-white rounded-xl shadow-lg p-6 card-hover"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center">
-                    <Building className="h-8 w-8 text-primary-600 mr-3" />
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {university.name}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {university.address.slice(0, 6)}...{university.address.slice(-4)}
-                      </p>
+          <div>
+            {universities.length === 0 ? (
+              <div className="text-center py-12">
+                <Building className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Universities Available</h3>
+                <p className="text-gray-500 mb-4">
+                  No universities have been added to the system yet.
+                </p>
+                {userIsAdmin && (
+                  <p className="text-sm text-gray-400">
+                    Use the Admin Dashboard to add universities.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {universities.map((university, index) => (
+                  <div 
+                    key={index}
+                    className="bg-white rounded-xl shadow-lg p-6 card-hover"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center">
+                        <Building className="h-8 w-8 text-primary-600 mr-3" />
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {university.name}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {university.address.slice(0, 6)}...{university.address.slice(-4)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <BookOpen className="h-4 w-4 mr-2" />
+                        <span>{university.course}</span>
+                      </div>
+
+                      <div className="flex items-center text-sm text-gray-600">
+                        <DollarSign className="h-4 w-4 mr-2" />
+                        <span className="font-medium text-primary-600">
+                          {formatEther(university.fee)} ETH
+                        </span>
+                      </div>
+
+                      <div className="flex items-center text-sm text-gray-600">
+                        <MapPin className="h-4 w-4 mr-2" />
+                        <span>Blockchain Verified</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 pt-4 border-t border-gray-200">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-500">
+                          Course Duration: 4 Years
+                        </span>
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                          Active
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    <span>{university.course}</span>
-                  </div>
-
-                  <div className="flex items-center text-sm text-gray-600">
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    <span className="font-medium text-primary-600">
-                      {formatEther(university.fee)} ETH
-                    </span>
-                  </div>
-
-                  <div className="flex items-center text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 mr-2" />
-                    <span>Blockchain Verified</span>
-                  </div>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-gray-200">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">
-                      Course Duration: 4 Years
-                    </span>
-                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                      Active
-                    </span>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
 
@@ -150,12 +238,12 @@ const UniversitiesPage: React.FC = () => {
             <GraduationCap className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Universities Found</h3>
             <p className="text-gray-600">
-              {isAdmin 
+              {userIsAdmin 
                 ? 'Add universities through the admin dashboard to get started.'
                 : 'No universities have been added yet. Please check back later.'
               }
             </p>
-            {isAdmin && (
+            {userIsAdmin && (
               <div className="mt-4">
                 <a 
                   href="/admin"

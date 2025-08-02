@@ -75,74 +75,24 @@ export const sendPushNotification = async (type: NotificationType, data: any) =>
   }
 };
 
-// Setup contract event listeners for notifications
+// Setup contract event listeners for notifications (simplified version)
 export const setupNotificationListeners = () => {
+  // Disable event listeners for now to improve performance
+  console.log('Notification listeners disabled for performance');
+  
+  // TODO: Re-enable when contract events are properly configured
+  /*
   try {
     const contract = getContract();
     
-    // Payment Made event
-    contract.on('PaymentMade', (student, university, amount, event) => {
-      sendPushNotification(NotificationType.PAYMENT_MADE, {
-        student,
-        university,
-        amount: ethers.formatEther(amount)
-      });
-    });
-
-    // Payment Verified event
-    contract.on('PaymentVerified', (student, university, event) => {
-      sendPushNotification(NotificationType.PAYMENT_VERIFIED, {
-        student,
-        university
-      });
-    });
-
-    // Payment Refunded event
-    contract.on('PaymentRefunded', (student, university, amount, event) => {
-      sendPushNotification(NotificationType.PAYMENT_REFUNDED, {
-        student,
-        university,
-        amount: ethers.formatEther(amount)
-      });
-    });
-
-    // Certificate Issued event
-    contract.on('CertificateIssued', (student, university, tokenId, event) => {
-      sendPushNotification(NotificationType.CERTIFICATE_ISSUED, {
-        student,
-        university,
-        tokenId: tokenId.toString()
-      });
-    });
-
-    // Student Registered event
-    contract.on('StudentRegistered', (student, event) => {
-      sendPushNotification(NotificationType.STUDENT_REGISTERED, {
-        student
-      });
-    });
-
-    // University Added event
-    contract.on('UniversityAdded', (name, address, course, fee, event) => {
-      sendPushNotification(NotificationType.UNIVERSITY_ADDED, {
-        university: name,
-        address,
-        course,
-        fee: ethers.formatEther(fee)
-      });
-    });
-
-    // University Removed event
-    contract.on('UniversityRemoved', (address, event) => {
-      sendPushNotification(NotificationType.UNIVERSITY_REMOVED, {
-        university: address
-      });
-    });
-
-    console.log('Notification listeners setup complete');
+    // Only set up basic event listeners that are known to work
+    // Comment out problematic event listeners for now
+    
+    console.log('Notification listeners setup complete (simplified)');
   } catch (error) {
     console.error('Error setting up notification listeners:', error);
   }
+  */
 };
 
 // Request notification permissions

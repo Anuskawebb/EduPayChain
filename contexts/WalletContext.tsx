@@ -66,7 +66,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   // Listen for account changes
   useEffect(() => {
     if (typeof window !== 'undefined' && window.ethereum) {
-      const handleAccountsChanged = (accounts: string[]) => {
+      const handleAccountsChanged = async (accounts: string[]) => {
         if (accounts.length === 0) {
           // User disconnected wallet
           setSigner(null);
@@ -74,9 +74,19 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           setIsConnected(false);
           setIsAdminUser(false);
         } else {
-          // Account changed
-          setAddress(accounts[0]);
-          setIsAdminUser(isAdmin(accounts[0]));
+          // Account changed - update signer and address
+          try {
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            const address = await signer.getAddress();
+            
+            setSigner(signer);
+            setAddress(address);
+            setIsConnected(true);
+            setIsAdminUser(isAdmin(address));
+          } catch (error) {
+            console.error('Error updating signer after account change:', error);
+          }
         }
       };
 

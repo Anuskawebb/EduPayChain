@@ -3,11 +3,14 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useWallet } from '../contexts/WalletContext';
-import { Wallet, GraduationCap, Users, Settings, Menu, X } from 'lucide-react';
+import AccountSelector from './AccountSelector';
+import { forceAccountSelection } from '../utils/contract';
+import { Wallet, GraduationCap, Users, Settings, Menu, X, RefreshCw } from 'lucide-react';
 
 const Navigation: React.FC = () => {
   const { isConnected, address, isAdmin, connect, disconnect, isLoading } = useWallet();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSwitchingAccount, setIsSwitchingAccount] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -21,8 +24,26 @@ const Navigation: React.FC = () => {
     }
   };
 
+  const handleSwitchAccount = async () => {
+    setIsSwitchingAccount(true);
+    try {
+      await forceAccountSelection();
+      // Refresh the page to update the wallet context
+      window.location.reload();
+    } catch (error) {
+      console.error('Error switching account:', error);
+    } finally {
+      setIsSwitchingAccount(false);
+    }
+  };
+
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  const handleAccountSelect = (newAddress: string) => {
+    // The wallet context will automatically update when the account changes
+    console.log('Account selected:', newAddress);
   };
 
   return (
@@ -69,6 +90,25 @@ const Navigation: React.FC = () => {
 
           {/* Wallet Connection */}
           <div className="flex items-center space-x-4">
+            {isConnected && (
+              <AccountSelector 
+                onAccountSelect={handleAccountSelect}
+                currentAddress={address || undefined}
+              />
+            )}
+            
+            {isConnected && (
+              <button
+                onClick={handleSwitchAccount}
+                disabled={isSwitchingAccount}
+                className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-colors duration-200 disabled:opacity-50"
+                title="Force account selection"
+              >
+                <RefreshCw className={`h-4 w-4 ${isSwitchingAccount ? 'animate-spin' : ''}`} />
+                <span className="text-sm">Switch Account</span>
+              </button>
+            )}
+            
             <button
               onClick={handleWalletAction}
               disabled={isLoading}
