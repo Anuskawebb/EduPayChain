@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useWallet } from '../../contexts/WalletContext';
-import { contractFunctions, formatEther, generateCertificateMetadata, debugUniversitiesState } from '../../utils/contract';
-import { setupNotificationListeners } from '../../utils/notifications';
+import { useAccount } from 'wagmi';
+import { useEduPayChain } from '../../hooks/useEduPayChain';
+import { formatEther, type Address } from 'viem';
 import Navigation from '../../components/Navigation';
 import { 
   Shield, 
@@ -22,30 +22,21 @@ import {
   DollarSign
 } from 'lucide-react';
 
-interface University {
-  name: string;
-  address: string;
-  course: string;
-  fee: bigint;
-}
-
-interface StudentInfo {
-  address: string;
-  isRegistered: boolean;
-  university: string;
-  amountPaid: bigint;
-  totalAmount: bigint;
-  isVerified: boolean;
-  isRefunded: boolean;
-  certificateTokenId: bigint;
-}
-
 const AdminDashboard: React.FC = () => {
-  const { isConnected, signer, address, isAdmin } = useWallet();
-  const [universities, setUniversities] = useState<University[]>([]);
-  const [students, setStudents] = useState<StudentInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { address, isConnected } = useAccount();
+  const {
+    isAdmin,
+    addUniversity,
+    removeUniversity,
+    verifyAndRelease,
+    refund,
+    isPending,
+    isConfirming,
+    isConfirmed,
+    error
+  } = useEduPayChain();
+
+  const [localError, setLocalError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   // University form state
@@ -60,153 +51,67 @@ const AdminDashboard: React.FC = () => {
   const [certificateCourse, setCertificateCourse] = useState('');
   const [certificateUniversity, setCertificateUniversity] = useState('');
 
-  // Setup notification listeners
+  // Handle transaction completion
   useEffect(() => {
-    setupNotificationListeners();
-  }, []);
-
-  // Load universities and students
-  useEffect(() => {
-    const loadData = async () => {
-      if (!isConnected || !isAdmin) return;
-
-      try {
-        const unis = await contractFunctions.getUniversities();
-        setUniversities(unis);
-        
-        // Start with empty students list - no mock data
-        setStudents([]);
-      } catch (error) {
-        console.error('Error loading data:', error);
-      }
-    };
-
-    loadData();
-  }, [isConnected, isAdmin]);
-
-  // Add university
-  const handleAddUniversity = async () => {
-    if (!signer || !universityName || !universityAddress || !universityCourse || !universityFee) return;
-
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const tx = await contractFunctions.addUniversity(
-        universityName,
-        universityAddress,
-        universityCourse,
-        universityFee,
-        signer
-      );
-      
-      setSuccess(`University added successfully! Transaction hash: ${tx.hash}. You can now view it in the Universities section.`);
-      
-      // Reset form
+    if (isConfirmed) {
+      setSuccess('Transaction completed successfully!');
+      setLocalError(null);
+      // Reset forms
       setUniversityName('');
       setUniversityAddress('');
       setUniversityCourse('');
       setUniversityFee('');
-      
-      // Debug the current state
-      await debugUniversitiesState();
-      
-      // Reload universities
-      const unis = await contractFunctions.getUniversities();
-      setUniversities(unis);
-      
-      console.log('Universities after adding:', unis);
-      
-      // Dispatch custom event to notify other pages
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('universitiesUpdated'));
-      }
-    } catch (error) {
-      console.error('Error adding university:', error);
-      setError(error instanceof Error ? error.message : 'Failed to add university');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Remove university
-  const handleRemoveUniversity = async (universityAddress: string) => {
-    if (!signer) return;
-
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      await contractFunctions.removeUniversity(universityAddress, signer);
-      setSuccess('University removed successfully! The change will be reflected in the Universities section.');
-      
-      // Debug the current state
-      await debugUniversitiesState();
-      
-      // Reload universities
-      const unis = await contractFunctions.getUniversities();
-      setUniversities(unis);
-      
-      console.log('Universities after removing:', unis);
-      
-      // Dispatch custom event to notify other pages
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('universitiesUpdated'));
-      }
-    } catch (error) {
-      console.error('Error removing university:', error);
-      setError(error instanceof Error ? error.message : 'Failed to remove university');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Verify and release certificate
-  const handleVerifyAndRelease = async () => {
-    if (!signer || !selectedStudent || !studentName || !certificateCourse || !certificateUniversity) return;
-
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      await contractFunctions.verifyAndRelease(selectedStudent, certificateUniversity, signer);
-      setSuccess('Payment verified and certificate issued successfully!');
-      
-      // Reset form
       setSelectedStudent('');
       setStudentName('');
       setCertificateCourse('');
       setCertificateUniversity('');
-    } catch (error) {
-      console.error('Error verifying payment:', error);
-      setError(error instanceof Error ? error.message : 'Failed to verify payment');
-    } finally {
-      setIsLoading(false);
     }
+  }, [isConfirmed]);
+
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      setLocalError(error.message || 'Transaction failed');
+      setSuccess(null);
+    }
+  }, [error]);
+
+  // Add university
+  const handleAddUniversity = () => {
+    if (!universityName || !universityAddress || !universityCourse || !universityFee) {
+      setLocalError('Please fill in all fields');
+      return;
+    }
+
+    setLocalError(null);
+    setSuccess(null);
+    addUniversity(universityAddress as Address, universityName, universityCourse, universityFee);
+  };
+
+  // Remove university
+  const handleRemoveUniversity = (universityAddr: string) => {
+    setLocalError(null);
+    setSuccess(null);
+    removeUniversity(universityAddr as Address);
+  };
+
+  // Verify and release certificate
+  const handleVerifyAndRelease = () => {
+    if (!selectedStudent) {
+      setLocalError('Please select a student');
+      return;
+    }
+
+    setLocalError(null);
+    setSuccess(null);
+    verifyAndRelease(selectedStudent as Address);
   };
 
   // Refund payment
-  const handleRefund = async (studentAddress: string) => {
-    if (!signer) return;
-
-    setIsLoading(true);
-    setError(null);
+  const handleRefund = (studentAddress: string) => {
+    setLocalError(null);
     setSuccess(null);
-
-    try {
-      // For demo purposes, we'll use a default university address
-      const defaultUniversity = '0x1234567890123456789012345678901234567890';
-      await contractFunctions.refund(studentAddress, defaultUniversity, signer);
-      setSuccess('Payment refunded successfully!');
-    } catch (error) {
-      console.error('Error refunding payment:', error);
-      setError(error instanceof Error ? error.message : 'Failed to refund payment');
-    } finally {
-      setIsLoading(false);
-    }
+    refund(studentAddress as Address);
   };
 
   // Check if user is admin
@@ -253,10 +158,10 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Error/Success Messages */}
-        {error && (
+        {localError && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center">
             <XCircle className="h-5 w-5 mr-2" />
-            {error}
+            {localError}
           </div>
         )}
 
@@ -331,11 +236,14 @@ const AdminDashboard: React.FC = () => {
 
               <button
                 onClick={handleAddUniversity}
-                disabled={!universityName || !universityAddress || !universityCourse || !universityFee || isLoading}
+                disabled={!universityName || !universityAddress || !universityCourse || !universityFee || isPending || isConfirming}
                 className="btn-primary w-full"
               >
-                {isLoading ? (
-                  <Loader className="h-4 w-4 animate-spin" />
+                {isPending || isConfirming ? (
+                  <>
+                    <Loader className="h-4 w-4 animate-spin mr-2" />
+                    {isPending ? 'Confirming...' : 'Processing...'}
+                  </>
                 ) : (
                   'Add University'
                 )}
@@ -351,31 +259,9 @@ const AdminDashboard: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              {universities.map((university, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{university.name}</h3>
-                      <p className="text-sm text-gray-600">{university.course}</p>
-                      <p className="text-sm text-gray-500">{university.address}</p>
-                      <p className="text-sm font-medium text-primary-600">
-                        {formatEther(university.fee)} ETH
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveUniversity(university.address)}
-                      disabled={isLoading}
-                      className="text-red-600 hover:text-red-800 p-1"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-              
-              {universities.length === 0 && (
-                <p className="text-gray-500 text-center py-4">No universities added yet.</p>
-              )}
+              <p className="text-gray-500 text-center py-4">
+                Universities will appear here after being added. Check the Universities page to view all added universities.
+              </p>
             </div>
           </div>
 
@@ -397,11 +283,9 @@ const AdminDashboard: React.FC = () => {
                   className="input-field"
                 >
                   <option value="">Select a student</option>
-                  {students.map((student, index) => (
-                    <option key={index} value={student.address}>
-                      {student.address.slice(0, 6)}...{student.address.slice(-4)} - {student.university}
-                    </option>
-                  ))}
+                  <option value="0x1234567890123456789012345678901234567890">
+                    0x1234...7890 - Sample Student
+                  </option>
                 </select>
               </div>
 
@@ -446,11 +330,14 @@ const AdminDashboard: React.FC = () => {
 
               <button
                 onClick={handleVerifyAndRelease}
-                disabled={!selectedStudent || !studentName || !certificateCourse || !certificateUniversity || isLoading}
+                disabled={!selectedStudent || isPending || isConfirming}
                 className="btn-success w-full"
               >
-                {isLoading ? (
-                  <Loader className="h-4 w-4 animate-spin" />
+                {isPending || isConfirming ? (
+                  <>
+                    <Loader className="h-4 w-4 animate-spin mr-2" />
+                    {isPending ? 'Confirming...' : 'Processing...'}
+                  </>
                 ) : (
                   'Verify & Issue Certificate'
                 )}
@@ -466,46 +353,9 @@ const AdminDashboard: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              {students.map((student, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {student.address.slice(0, 6)}...{student.address.slice(-4)}
-                      </p>
-                      <p className="text-sm text-gray-600">{student.university}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-primary-600">
-                        {formatEther(student.amountPaid)} / {formatEther(student.totalAmount)} ETH
-                      </p>
-                      {student.isVerified ? (
-                        <span className="status-verified">Verified</span>
-                      ) : student.isRefunded ? (
-                        <span className="status-refunded">Refunded</span>
-                      ) : (
-                        <span className="status-pending">Pending</span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    {!student.isVerified && !student.isRefunded && (
-                      <button
-                        onClick={() => handleRefund(student.address)}
-                        disabled={isLoading}
-                        className="btn-danger text-xs px-2 py-1"
-                      >
-                        Refund
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              
-              {students.length === 0 && (
-                <p className="text-gray-500 text-center py-4">No payment records found.</p>
-              )}
+              <p className="text-gray-500 text-center py-4">
+                Payment records will appear here when students make payments.
+              </p>
             </div>
           </div>
         </div>

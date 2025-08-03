@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useWallet } from '../../contexts/WalletContext';
-import { contractFunctions, formatEther, isAdmin } from '../../utils/contract';
-import { setupNotificationListeners } from '../../utils/notifications';
+import { useAccount } from 'wagmi';
+import { useEduPayChain } from '../../hooks/useEduPayChain';
+import { uploadToIPFS, generateCertificateMetadata } from '../../lib/ipfs';
+import { formatEther, parseEther, type Address } from 'viem';
+import { ADMIN_ADDRESS } from '../../lib/config';
 import Navigation from '../../components/Navigation';
 import { 
   GraduationCap, 
@@ -22,148 +24,68 @@ import {
   Shield
 } from 'lucide-react';
 
-interface University {
-  name: string;
-  address: string;
-  course: string;
-  fee: bigint;
-}
-
-interface PaymentStatus {
-  isRegistered: boolean;
-  university: string;
-  amountPaid: bigint;
-  totalAmount: bigint;
-  isVerified: boolean;
-  isRefunded: boolean;
-  certificateTokenId: bigint;
-}
-
 const StudentDashboard: React.FC = () => {
-  const { isConnected, signer, address } = useWallet();
-  const [universities, setUniversities] = useState<University[]>([]);
+  const { address, isConnected } = useAccount();
+  const {
+    isAdmin,
+    hasStudentRole,
+    tokenAddress,
+    getTokenBalance,
+    getTokenAllowance,
+    getPayment,
+    approveTokens,
+    payFees,
+    getTokensFromFaucet,
+    isPending,
+    isConfirming,
+    isConfirmed,
+    error,
+    hash
+  } = useEduPayChain();
+
+  // Mock universities data - in real app, you'd fetch this from contract events or API
+  const [universities] = useState([
+    {
+      name: 'MIT University',
+      address: '0x1234567890123456789012345678901234567890' as Address,
+      course: 'Computer Science',
+      fee: parseEther('0.1')
+    },
+    {
+      name: 'Stanford University', 
+      address: '0x2345678901234567890123456789012345678901' as Address,
+      course: 'Engineering',
+      fee: parseEther('0.15')
+    }
+  ]);
+
   const [selectedUniversity, setSelectedUniversity] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [studentName, setStudentName] = useState('');
   const [course, setCourse] = useState('');
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isGettingTokens, setIsGettingTokens] = useState(false);
-  const [certificateMetadata, setCertificateMetadata] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [isCheckingRegistration, setIsCheckingRegistration] = useState(true);
 
-  // Reset registration state when wallet changes
+  // Get user's token balance and allowance
+  const { data: tokenBalance } = getTokenBalance(address as Address);
+  const { data: tokenAllowance } = getTokenAllowance(address as Address);
+  const { data: paymentData } = getPayment(address as Address);
+
+  // Clear messages when transaction is confirmed
   useEffect(() => {
-    setIsCheckingRegistration(true);
-  }, [address]);
-
-  // Check if user is admin
-  const userIsAdmin = address ? isAdmin(address) : false;
-
-  // Setup notification listeners
-  useEffect(() => {
-    setupNotificationListeners();
-  }, []);
-
-  // Load universities
-  useEffect(() => {
-    const loadUniversities = async () => {
-      try {
-        const unis = await contractFunctions.getUniversities();
-        setUniversities(unis);
-      } catch (error) {
-        console.error('Error loading universities:', error);
-      }
-    };
-
-    if (isConnected) {
-      loadUniversities();
+    if (isConfirmed) {
+      setSuccess('Transaction completed successfully!');
+      setLocalError(null);
     }
-  }, [isConnected]);
+  }, [isConfirmed]);
 
-  // Load student status
+  // Handle error display
   useEffect(() => {
-    const loadStudentStatus = async () => {
-      if (!address || !isConnected) {
-        setIsCheckingRegistration(false);
-        return;
-      }
-
-      try {
-              // Check if student is registered
-      const studentInfo = await contractFunctions.getStudentInfo(address);
-      console.log('Student registration check:', studentInfo);
-      console.log('Student address being checked:', address);
-      
-      if (!studentInfo.isRegistered) {
-        // Student is not registered, show message to register first
-        setError('You need to register as a student first. Please visit the registration page or click "Register as Student" below.');
-        setIsCheckingRegistration(false);
-        return;
-      }
-      
-      // Student is registered, clear any previous errors
-      setError(null);
-
-        // Student is registered, now get payment status
-        let status = null;
-        if (universities.length > 0) {
-          try {
-            status = await contractFunctions.getStatus(address, universities[0].address);
-            console.log('Student status from contract:', status);
-          } catch (error) {
-            console.log('Could not get status from first university, using default status');
-          }
-        }
-        
-        // If no status found, create a default status for registered student
-        if (!status) {
-          status = {
-            isRegistered: true,
-            university: '',
-            amountPaid: 0n,
-            totalAmount: 0n,
-            isVerified: false,
-            isRefunded: false,
-            certificateTokenId: 0n
-          };
-          console.log('Using default status for registered student');
-        }
-        
-        console.log('Setting payment status:', status);
-        setPaymentStatus(status);
-      } catch (error) {
-        console.error('Error loading student status:', error);
-        setError('Error checking registration status. Please try again.');
-      } finally {
-        setIsCheckingRegistration(false);
-      }
-    };
-
-    loadStudentStatus();
-  }, [address, isConnected, universities]);
-
-
-
-  // Load certificate metadata if verified
-  useEffect(() => {
-    const loadCertificateMetadata = async () => {
-      if (paymentStatus?.isVerified && paymentStatus.certificateTokenId > 0n) {
-        try {
-          const uri = await contractFunctions.getTokenURI(Number(paymentStatus.certificateTokenId));
-          const response = await fetch(uri);
-          const metadata = await response.json();
-          setCertificateMetadata(metadata);
-        } catch (error) {
-          console.error('Error loading certificate metadata:', error);
-        }
-      }
-    };
-
-    loadCertificateMetadata();
-  }, [paymentStatus]);
+    if (error) {
+      setLocalError(error.message || 'Transaction failed');
+      setSuccess(null);
+    }
+  }, [error]);
 
   // Handle university selection
   const handleUniversitySelect = (universityAddress: string) => {
@@ -173,163 +95,86 @@ const StudentDashboard: React.FC = () => {
       const feeAmount = formatEther(university.fee);
       setPaymentAmount(feeAmount);
       setCourse(university.course);
-      console.log('Selected university fee:', feeAmount, 'ETH');
     } else {
       setPaymentAmount('');
       setCourse('');
     }
   };
 
-  // Pay fees
-  const handleRegisterAsStudent = async () => {
-    if (!signer || !address) {
-      setError('Please connect your wallet first.');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
+  // Get tokens from faucet
+  const handleGetTokens = () => {
+    setLocalError(null);
     setSuccess(null);
-
-    try {
-      console.log('Registering as student...');
-      await contractFunctions.registerAsStudent(signer);
-      setSuccess('Successfully registered as student! You can now pay fees.');
-      
-      // Reload student status
-      const studentInfo = await contractFunctions.getStudentInfo(address);
-      // Reload payment status for the selected university
-      if (selectedUniversity) {
-        const status = await contractFunctions.getStatus(address, selectedUniversity);
-        setPaymentStatus(status);
-      }
-    } catch (error: any) {
-      console.error('Error registering as student:', error);
-      const errorMessage = error?.message || error?.toString() || 'Failed to register as student';
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
+    getTokensFromFaucet();
   };
 
-  const handleGetTokens = async () => {
-    if (!signer || !address) {
-      setError('Please connect your wallet first.');
-      return;
-    }
-
-    setIsGettingTokens(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      console.log('Attempting to get tokens...');
-      const result = await contractFunctions.getTokens(signer);
-      
-      if (result.success) {
-        setSuccess(`Successfully got ${result.newBalance} ${result.symbol} tokens using ${result.method} function!`);
-      } else {
-        setError(`Failed to get tokens: ${result.message}`);
-      }
-    } catch (error: any) {
-      console.error('Error getting tokens:', error);
-      const errorMessage = error?.message || error?.toString() || 'Failed to get tokens';
-      setError(errorMessage);
-    } finally {
-      setIsGettingTokens(false);
-    }
-  };
-
+  // Pay fees with automatic approval
   const handlePayFees = async () => {
-    if (!signer || !address || !selectedUniversity || !studentName || !course) {
-      setError('Please fill in all required fields.');
+    if (!address || !selectedUniversity || !studentName || !course || !paymentAmount) {
+      setLocalError('Please fill in all required fields.');
       return;
     }
 
-    // Validate payment amount
-    if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
-      setError('Please enter a valid payment amount greater than 0.');
+    if (parseFloat(paymentAmount) <= 0) {
+      setLocalError('Please enter a valid payment amount greater than 0.');
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
+    setLocalError(null);
     setSuccess(null);
 
     try {
-      // Check if user is admin
-      if (userIsAdmin) {
-        setError('Admin cannot make student payments. Please use a different wallet address.');
+      if (isAdmin) {
+        setLocalError('Admin cannot make student payments. Please use a different wallet address.');
         return;
       }
 
-      console.log('Paying fees with signer:', signer);
-      console.log('Payment details:', {
-        university: selectedUniversity,
-        amount: paymentAmount,
+      const amount = parseEther(paymentAmount);
+      
+      // Check if user has enough tokens
+      if (!tokenBalance || tokenBalance < amount) {
+        setLocalError(`Insufficient token balance. You have ${tokenBalance ? formatEther(tokenBalance) : '0'} tokens, but need ${paymentAmount} tokens.`);
+        return;
+      }
+      
+      // Check allowance and approve if needed
+      if (!tokenAllowance || tokenAllowance < amount) {
+        setSuccess('Approving tokens...');
+        approveTokens(amount);
+        return; // Wait for approval to complete
+      }
+      
+      // Generate metadata and upload to IPFS
+      const metadata = generateCertificateMetadata(
         studentName,
-        course
-      });
-
-      console.log('Proceeding with payment - registration will be verified by smart contract');
-
-      // Execute the payment transaction
-      const paymentTx = await contractFunctions.payFees(selectedUniversity, paymentAmount, studentName, course, signer);
+        course,
+        universities.find(u => u.address === selectedUniversity)?.name || 'Unknown University',
+        new Date().toISOString()
+      );
       
-      // If we get here, the payment was successful
-      console.log('Payment transaction completed successfully:', paymentTx.hash);
-      setSuccess('Payment successful! Transaction hash: ' + paymentTx.hash.substring(0, 10) + '...');
+      setSuccess('Uploading certificate metadata to IPFS...');
+      const metadataURI = await uploadToIPFS(metadata);
       
-      // Try to reload status, but don't fail the whole operation if this fails
-      try {
-        const status = await contractFunctions.getStatus(address, selectedUniversity);
-        setPaymentStatus(status);
-        console.log('Status reloaded successfully:', status);
-      } catch (statusError) {
-        console.warn('Failed to reload status after payment, but payment was successful:', statusError);
-        // Don't show this as an error to the user since the payment succeeded
-      }
+      // Pay fees
+      setSuccess('Processing payment...');
+      payFees(selectedUniversity as Address, amount, metadataURI);
+      
     } catch (error: any) {
-      console.error('Error paying fees:', error);
-      
-      // Check if this is a user cancellation
-      if (error?.message?.includes('cancelled by user') || 
-          error?.message?.includes('user rejected') || 
-          error?.message?.includes('User denied')) {
-        setError('Transaction was cancelled by user');
-      } else {
-        // Check if the transaction was actually sent but failed
-        if (error?.hash) {
-          setError(`Payment transaction failed. Hash: ${error.hash.substring(0, 10)}... Check MetaMask for details.`);
-        } else {
-          const errorMessage = error?.message || error?.toString() || 'Failed to pay fees';
-          setError(errorMessage);
-        }
+      console.error('Error in payment flow:', error);
+      setLocalError(error.message || 'Payment failed');
+    }
+  };
+
+  // Effect to handle approval completion
+  useEffect(() => {
+    if (isConfirmed && hash && tokenAllowance && selectedUniversity && paymentAmount) {
+      const amount = parseEther(paymentAmount);
+      if (tokenAllowance >= amount) {
+        // Approval completed, now pay fees
+        handlePayFees();
       }
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  const getStatusBadge = () => {
-    if (!paymentStatus) return null;
-
-    if (paymentStatus.isRefunded) {
-      return <span className="status-refunded">Refunded</span>;
-    } else if (paymentStatus.isVerified) {
-      return <span className="status-verified">Verified</span>;
-    } else if (paymentStatus.amountPaid > 0n) {
-      return <span className="status-paid">Partially Paid</span>;
-    } else {
-      return <span className="status-pending">Pending</span>;
-    }
-  };
-
-  const getPaymentProgress = () => {
-    if (!paymentStatus || !paymentStatus.totalAmount || paymentStatus.totalAmount === 0n) return 0;
-    if (!paymentStatus.amountPaid) return 0;
-    return Number((paymentStatus.amountPaid * 100n) / paymentStatus.totalAmount);
-  };
+  }, [isConfirmed, hash, tokenAllowance]);
 
   if (!isConnected) {
     return (
@@ -347,7 +192,7 @@ const StudentDashboard: React.FC = () => {
   }
 
   // Block admin access
-  if (userIsAdmin) {
+  if (isAdmin) {
     return (
       <div className="min-h-screen">
         <Navigation />
@@ -367,16 +212,25 @@ const StudentDashboard: React.FC = () => {
     );
   }
 
-  // Show loading while checking registration
-  if (isCheckingRegistration) {
+  // Show registration prompt if not registered
+  if (!hasStudentRole) {
     return (
       <div className="min-h-screen">
         <Navigation />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <Loader className="h-8 w-8 text-primary-600 mx-auto mb-4 animate-spin" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Checking Registration</h2>
-            <p className="text-gray-600">Please wait while we verify your student registration...</p>
+            <AlertCircle className="h-16 w-16 text-yellow-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration Required</h2>
+            <p className="text-gray-600 mb-4">
+              You need to register as a student first to access the payment dashboard.
+            </p>
+            <a 
+              href="/student/register"
+              className="btn-primary inline-flex items-center"
+            >
+              Register as Student
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </a>
           </div>
         </div>
       </div>
@@ -394,38 +248,15 @@ const StudentDashboard: React.FC = () => {
         </div>
 
         {/* Error and Success Messages */}
-        {error && (
+        {localError && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
+            {localError}
           </div>
         )}
 
         {success && (
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
             {success}
-          </div>
-        )}
-
-        {/* Registration Section */}
-        {error && error.includes('register as a student') && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <AlertCircle className="h-5 w-5 mr-2" />
-                <span>You need to register as a student first to pay fees.</span>
-              </div>
-              <button
-                onClick={handleRegisterAsStudent}
-                disabled={isLoading}
-                className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                {isLoading ? (
-                  <Loader className="h-4 w-4 animate-spin" />
-                ) : (
-                  'Register as Student'
-                )}
-              </button>
-            </div>
           </div>
         )}
 
@@ -505,25 +336,18 @@ const StudentDashboard: React.FC = () => {
                   min="0.01"
                   className={`input-field ${!paymentAmount || parseFloat(paymentAmount) <= 0 ? 'border-red-300 focus:border-red-500' : ''}`}
                 />
-                {(!paymentAmount || parseFloat(paymentAmount) <= 0) && (
-                  <p className="text-sm text-red-500 mt-1">
-                    Please enter a valid amount greater than 0
-                  </p>
-                )}
-                {selectedUniversity && paymentAmount && parseFloat(paymentAmount) > 0 && (
-                  <p className="text-sm text-green-600 mt-1">
-                    ✓ Amount is valid
-                  </p>
-                )}
+                <div className="text-xs text-gray-500 mt-1">
+                  Balance: {tokenBalance ? formatEther(tokenBalance) : '0'} tokens
+                </div>
               </div>
 
               {/* Get Tokens Button */}
               <button
                 onClick={handleGetTokens}
-                disabled={isGettingTokens}
+                disabled={isPending}
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors w-full mb-3"
               >
-                {isGettingTokens ? (
+                {isPending ? (
                   <Loader className="h-4 w-4 animate-spin" />
                 ) : (
                   'Get Tokens (Free)'
@@ -532,11 +356,14 @@ const StudentDashboard: React.FC = () => {
 
               <button
                 onClick={handlePayFees}
-                disabled={!selectedUniversity || !paymentAmount || parseFloat(paymentAmount) <= 0 || !studentName || isLoading}
+                disabled={!selectedUniversity || !paymentAmount || parseFloat(paymentAmount) <= 0 || !studentName || isPending || isConfirming}
                 className="btn-primary w-full"
               >
-                {isLoading ? (
-                  <Loader className="h-4 w-4 animate-spin" />
+                {isPending || isConfirming ? (
+                  <>
+                    <Loader className="h-4 w-4 animate-spin mr-2" />
+                    {isPending ? 'Confirming...' : 'Processing...'}
+                  </>
                 ) : (
                   'Pay Fees'
                 )}
@@ -555,27 +382,31 @@ const StudentDashboard: React.FC = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Status:</span>
-                {getStatusBadge() || <span className="status-pending">No Payment</span>}
+                <span className="status-pending">
+                  {paymentData?.status === 1 ? 'Verified' : 
+                   paymentData?.status === 2 ? 'Refunded' :
+                   paymentData?.amount > 0n ? 'Pending' : 'No Payment'}
+                </span>
               </div>
 
-              {paymentStatus?.university && (
+              {paymentData?.university && (
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">University:</span>
-                  <span className="font-medium">{paymentStatus.university}</span>
+                  <span className="font-medium">{paymentData.university}</span>
                 </div>
               )}
 
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Amount Paid:</span>
                 <span className="font-medium">
-                  {paymentStatus && paymentStatus.amountPaid ? formatEther(paymentStatus.amountPaid) : '0'} ETH
+                  {paymentData?.paidAmount ? formatEther(paymentData.paidAmount) : '0'} ETH
                 </span>
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Total Amount:</span>
                 <span className="font-medium">
-                  {paymentStatus && paymentStatus.totalAmount ? formatEther(paymentStatus.totalAmount) : '0'} ETH
+                  {paymentData?.amount ? formatEther(paymentData.amount) : '0'} ETH
                 </span>
               </div>
 
@@ -583,12 +414,20 @@ const StudentDashboard: React.FC = () => {
               <div className="mt-4">
                 <div className="flex justify-between text-sm text-gray-600 mb-1">
                   <span>Payment Progress</span>
-                  <span>{getPaymentProgress()}%</span>
+                  <span>
+                    {paymentData?.amount && paymentData?.paidAmount 
+                      ? Math.round(Number((paymentData.paidAmount * 100n) / paymentData.amount))
+                      : 0}%
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${getPaymentProgress()}%` }}
+                    style={{ 
+                      width: `${paymentData?.amount && paymentData?.paidAmount 
+                        ? Math.round(Number((paymentData.paidAmount * 100n) / paymentData.amount))
+                        : 0}%` 
+                    }}
                   ></div>
                 </div>
               </div>
@@ -596,7 +435,7 @@ const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Certificate Display */}
-          {paymentStatus?.isVerified && certificateMetadata && (
+          {paymentData?.status === 1 && (
             <div className="bg-white rounded-xl shadow-lg p-6 lg:col-span-2">
               <div className="flex items-center mb-4">
                 <Award className="h-6 w-6 text-primary-600 mr-2" />
@@ -609,23 +448,14 @@ const StudentDashboard: React.FC = () => {
                     <Award className="h-12 w-12 text-primary-600 mx-auto" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    {certificateMetadata.name}
+                    Certificate - {studentName}
                   </h3>
-                  <p className="text-gray-600">{certificateMetadata.description}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  {certificateMetadata.attributes?.map((attr: any, index: number) => (
-                    <div key={index}>
-                      <span className="text-gray-500">{attr.trait_type}:</span>
-                      <span className="font-medium ml-2">{attr.value}</span>
-                    </div>
-                  ))}
+                  <p className="text-gray-600">Certificate for {course}</p>
                 </div>
 
                 <div className="mt-4 text-center">
                   <span className="text-xs text-gray-500">
-                    Token ID: {paymentStatus.certificateTokenId.toString()}
+                    Certificate verified and issued
                   </span>
                 </div>
               </div>
