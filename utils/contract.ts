@@ -169,7 +169,7 @@ export const isAdmin = (address: string) => {
 // Track known university addresses (since we can't enumerate mapping keys)
 let knownUniversityAddresses: string[] = [];
 
-// Initialize known addresses from localStorage
+
 const initializeKnownAddresses = () => {
   if (typeof window !== 'undefined') {
     try {
@@ -185,7 +185,7 @@ const initializeKnownAddresses = () => {
   }
 };
 
-// Save known addresses to localStorage
+
 const saveKnownAddresses = () => {
   if (typeof window !== 'undefined') {
     try {
@@ -197,10 +197,10 @@ const saveKnownAddresses = () => {
   }
 };
 
-// Initialize on module load
+
 initializeKnownAddresses();
 
-// Utility function to clear known university addresses (for testing)
+
 export const clearKnownUniversities = () => {
   knownUniversityAddresses = [];
   if (typeof window !== 'undefined') {
@@ -209,12 +209,12 @@ export const clearKnownUniversities = () => {
   console.log('Known university addresses cleared');
 };
 
-// Utility function to get known university addresses (for debugging)
+
 export const getKnownUniversityAddresses = () => {
   return knownUniversityAddresses;
 };
 
-// Debug function to log current state
+
 export const debugUniversitiesState = async () => {
   console.log('=== Universities Debug Info ===');
   console.log('Known university addresses:', knownUniversityAddresses);
@@ -345,61 +345,138 @@ export const contractFunctions = {
         throw new Error('Signer is required for transactions');
       }
 
-      const contract = getContractWithSigner(signer);
-      
-      // Check if student is registered first
+      // Check if wallet is connected
       try {
         const studentAddress = await signer.getAddress();
-        console.log('Checking if student is registered:', studentAddress);
-        
-        // Try to get student status to check if registered
-        if (contract.payments) {
-          const paymentData = await contract.payments(studentAddress);
-          console.log('Student payment data:', paymentData);
+        if (!studentAddress) {
+          throw new Error('Please connect your MetaMask wallet first');
         }
       } catch (error) {
-        console.log('Student not found in payments mapping, may need to register first');
+        throw new Error('Please connect your MetaMask wallet first');
       }
       
-      if (contract.payFees) {
-        // Generate metadata URI for the payment
-        const metadataURI = generateCertificateMetadata(studentName, course, university, new Date().toISOString());
-        
-        console.log('Calling payFees with parameters:', {
-          university,
-          amount: ethers.parseEther(amount),
-          metadataURI
-        });
-        
-        // Call the actual smart contract function
-        return await contract.payFees(university, ethers.parseEther(amount), metadataURI);
-      } else {
-        console.warn('payFees function not found in contract ABI');
-        throw new Error('Smart contract function not available');
+      const contract = getContractWithSigner(signer);
+      const studentAddress = await signer.getAddress();
+      
+      // Check if there's already a payment for this student
+      try {
+        const existingPayment = await contract.payments(studentAddress);
+        if (existingPayment.amount > 0n) {
+          console.log('Existing payment found:', {
+            amount: existingPayment.amount.toString(),
+            paidAmount: existingPayment.paidAmount.toString(),
+            status: existingPayment.status
+          });
+          
+          // If payment is already verified or in progress, don't allow another payment
+          if (existingPayment.status === 1) { // Assuming 1 = Verified
+            throw new Error('Payment has already been verified for this student');
+          } else if (existingPayment.status === 2) { // Assuming 2 = Refunded
+            throw new Error('Payment has been refunded for this student');
+          } else if (existingPayment.paidAmount > 0n) {
+            throw new Error('Payment is already in progress for this student');
+          }
+        }
+      } catch (error) {
+        // If payments mapping doesn't exist or other error, continue
+        console.log('No existing payment found or error checking payments:', error);
       }
+      
+      const metadataURI = generateCertificateMetadata(studentName, course, university, new Date().toISOString());
+      const parsedAmount = ethers.parseEther(amount);
+      
+      // Get the token contract address and create token contract instance
+      const tokenAddress = await contract.token();
+      console.log('Token contract address:', tokenAddress);
+      console.log('Contract target address:', contract.target);
+      
+      const tokenContract = new ethers.Contract(tokenAddress, [
+        'function approve(address spender, uint256 amount) external returns (bool)',
+        'function allowance(address owner, address spender) external view returns (uint256)',
+        'function balanceOf(address owner) external view returns (uint256)'
+      ], signer);
+      
+      // Check token balance first
+      const tokenBalance = await tokenContract.balanceOf(studentAddress);
+      console.log('Token balance:', tokenBalance.toString());
+      
+      if (tokenBalance < parsedAmount) {
+        throw new Error(`Insufficient token balance. You have ${ethers.formatEther(tokenBalance)} tokens, but need ${amount} tokens.`);
+      }
+      
+      // Check current allowance
+      const currentAllowance = await tokenContract.allowance(studentAddress, contract.target);
+      console.log('Current allowance:', currentAllowance.toString());
+      console.log('Required amount:', parsedAmount.toString());
+      
+      // Always approve the token - this ensures we have sufficient allowance
+      console.log('Approving tokens for payment...');
+        const approveTx = await tokenContract.approve(contract.target, parsedAmount);
+        console.log('Approval transaction sent:', approveTx.hash);
+      
+      // Wait for approval confirmation
+      const approveReceipt = await approveTx.wait();
+      console.log('Approval transaction confirmed in block:', approveReceipt.blockNumber);
+      
+      // Verify the allowance was set correctly
+      const newAllowance = await tokenContract.allowance(studentAddress, contract.target);
+      console.log('New allowance after approval:', newAllowance.toString());
+      
+      if (newAllowance < parsedAmount) {
+        throw new Error('Token approval failed - allowance still insufficient after approval');
+      }
+      
+      console.log('Token approval successful!');
+      
+      console.log('Calling payFees with parameters:', {
+        university,
+        amount: parsedAmount.toString(),
+        metadataURI
+      });
+      
+      // Execute the payment transaction
+      console.log('Executing payFees transaction...');
+      
+      // Remove gas estimation as it can cause false errors
+      // The transaction will fail naturally if there are issues
+      
+      const tx = await contract.payFees(university, parsedAmount, metadataURI);
+      console.log('Payment transaction sent successfully:', tx.hash);
+      
+      // Wait for transaction confirmation
+      const receipt = await tx.wait();
+      console.log('Payment transaction confirmed in block:', receipt.blockNumber);
+      
+      return tx;
     } catch (error) {
       console.error('Error paying fees:', error);
       
-      // Try to extract more specific error information
+      // Improved error handling
       if (error && typeof error === 'object') {
         console.log('Full error object:', error);
         
+        // Check if it's a transaction that was sent but failed
+        if ('hash' in error && error.hash) {
+          console.log('Transaction was sent but failed:', error.hash);
+          throw new Error(`Payment transaction failed. Hash: ${error.hash}. Check MetaMask for details.`);
+        }
+        
+        // Check for specific error types
         if ('reason' in error && error.reason) {
           throw new Error(`Payment failed: ${error.reason}`);
-        } else if ('message' in error && error.message) {
+        } else if ('message' in error && error.message && typeof error.message === 'string') {
+          // Don't throw if it's just a user rejection
+          if (error.message.includes('user rejected') || error.message.includes('User denied')) {
+            throw new Error('Transaction was cancelled by user');
+          }
           throw new Error(`Payment failed: ${error.message}`);
         } else if ('data' in error && error.data) {
-          // Try to decode the error data
           console.log('Error data:', error.data);
-          throw new Error(`Payment failed: Contract error (check console for details)`);
-        } else if ('error' in error && error.error && typeof error.error === 'object' && 'message' in error.error) {
-          console.log('Nested error:', error.error);
-          throw new Error(`Payment failed: ${(error.error as any).message || 'Unknown contract error'}`);
+          throw new Error(`Payment failed: Smart contract error (check console for details)`);
         }
       }
       
-      // If we can't extract specific error, provide helpful guidance
-      throw new Error('Payment failed. Please check: 1) You are registered as a student, 2) University is approved, 3) Amount is correct, 4) You have sufficient ETH balance.');
+      throw new Error('Payment failed: Unknown error occurred');
     }
   },
 
@@ -439,6 +516,225 @@ export const contractFunctions = {
       }
     } catch (error) {
       console.error('Error refunding payment:', error);
+      throw error;
+    }
+  },
+
+  // Check if a payment transaction was successful
+  checkPaymentSuccess: async (student: string, university: string) => {
+    try {
+      const contract = getContract();
+      if (contract.payments) {
+        const paymentData = await contract.payments(student);
+        return {
+          hasPayment: paymentData.amount > 0n,
+          amount: paymentData.amount,
+          paidAmount: paymentData.paidAmount,
+          status: paymentData.status
+        };
+      }
+      return { hasPayment: false, amount: 0n, paidAmount: 0n, status: 0 };
+    } catch (error) {
+      console.error('Error checking payment success:', error);
+      return { hasPayment: false, amount: 0n, paidAmount: 0n, status: 0 };
+    }
+  },
+
+  // Reset token allowance (useful for debugging)
+  resetTokenAllowance: async (signer?: ethers.Signer) => {
+    try {
+      if (!signer) {
+        throw new Error('Signer is required for transactions');
+      }
+
+      const contract = getContractWithSigner(signer);
+      const studentAddress = await signer.getAddress();
+      
+      // Get the token contract address
+      const tokenAddress = await contract.token();
+      const tokenContract = new ethers.Contract(tokenAddress, [
+        'function approve(address spender, uint256 amount) external returns (bool)',
+        'function allowance(address owner, address spender) external view returns (uint256)'
+      ], signer);
+      
+      // Reset allowance to 0
+      const resetTx = await tokenContract.approve(contract.target, 0);
+      console.log('Reset allowance transaction sent:', resetTx.hash);
+      await resetTx.wait();
+      console.log('Allowance reset to 0');
+      
+      return true;
+    } catch (error) {
+      console.error('Error resetting allowance:', error);
+      throw error;
+    }
+  },
+
+  // Debug token approval status
+  debugTokenApproval: async (signer?: ethers.Signer) => {
+    try {
+      if (!signer) {
+        throw new Error('Signer is required for transactions');
+      }
+
+      const contract = getContractWithSigner(signer);
+      const studentAddress = await signer.getAddress();
+      
+      // Get the token contract address
+      const tokenAddress = await contract.token();
+      const tokenContract = new ethers.Contract(tokenAddress, [
+        'function allowance(address owner, address spender) external view returns (uint256)',
+        'function balanceOf(address owner) external view returns (uint256)',
+        'function name() external view returns (string)',
+        'function symbol() external view returns (string)',
+        'function decimals() external view returns (uint8)',
+        'function mint(address to, uint256 amount) external',
+        'function faucet() external',
+        'function getTokens() external'
+      ], signer);
+      
+      const allowance = await tokenContract.allowance(studentAddress, contract.target);
+      const balance = await tokenContract.balanceOf(studentAddress);
+      const name = await tokenContract.name();
+      const symbol = await tokenContract.symbol();
+      const decimals = await tokenContract.decimals();
+      
+      console.log('=== Token Approval Debug ===');
+      console.log('Token Name:', name);
+      console.log('Token Symbol:', symbol);
+      console.log('Token Decimals:', decimals);
+      console.log('Token Address:', tokenAddress);
+      console.log('Contract Address:', contract.target);
+      console.log('Student Address:', studentAddress);
+      console.log('Token Balance:', ethers.formatUnits(balance, decimals));
+      console.log('Current Allowance:', ethers.formatUnits(allowance, decimals));
+      console.log('Allowance Raw:', allowance.toString());
+      console.log('Balance Raw:', balance.toString());
+      console.log('=== End Debug ===');
+      
+      return {
+        name,
+        symbol,
+        decimals,
+        tokenAddress,
+        contractAddress: contract.target,
+        studentAddress,
+        balance: ethers.formatUnits(balance, decimals),
+        allowance: ethers.formatUnits(allowance, decimals),
+        balanceRaw: balance.toString(),
+        allowanceRaw: allowance.toString()
+      };
+    } catch (error) {
+      console.error('Error debugging token approval:', error);
+      throw error;
+    }
+  },
+
+  // Try to get tokens from faucet or mint function
+  getTokens: async (signer?: ethers.Signer) => {
+    try {
+      if (!signer) {
+        throw new Error('Signer is required for transactions');
+      }
+
+      const contract = getContractWithSigner(signer);
+      const studentAddress = await signer.getAddress();
+      
+      // Get the token contract address
+      const tokenAddress = await contract.token();
+      const tokenContract = new ethers.Contract(tokenAddress, [
+        'function mint(address to, uint256 amount) external',
+        'function faucet() external',
+        'function getTokens() external',
+        'function balanceOf(address owner) external view returns (uint256)',
+        'function name() external view returns (string)',
+        'function symbol() external view returns (string)',
+        'function decimals() external view returns (uint8)'
+      ], signer);
+      
+      console.log('=== Trying to Get Tokens ===');
+      console.log('Token Address:', tokenAddress);
+      console.log('Student Address:', studentAddress);
+      
+      // Check current balance first
+      const currentBalance = await tokenContract.balanceOf(studentAddress);
+      const name = await tokenContract.name();
+      const symbol = await tokenContract.symbol();
+      const decimals = await tokenContract.decimals();
+      
+      console.log('Current balance:', ethers.formatUnits(currentBalance, decimals), symbol);
+      
+      // Try different methods to get tokens
+      let success = false;
+      let method = '';
+      
+      // Method 1: Try faucet function
+      try {
+        console.log('Trying faucet() function...');
+        const faucetTx = await tokenContract.faucet();
+        await faucetTx.wait();
+        console.log('Faucet transaction successful!');
+        success = true;
+        method = 'faucet';
+      } catch (error: any) {
+        console.log('Faucet function failed:', error?.message || 'Unknown error');
+      }
+      
+      // Method 2: Try getTokens function
+      if (!success) {
+        try {
+          console.log('Trying getTokens() function...');
+          const getTokensTx = await tokenContract.getTokens();
+          await getTokensTx.wait();
+          console.log('getTokens transaction successful!');
+          success = true;
+          method = 'getTokens';
+        } catch (error: any) {
+          console.log('getTokens function failed:', error?.message || 'Unknown error');
+        }
+      }
+      
+      // Method 3: Try mint function (if you have permission)
+      if (!success) {
+        try {
+          console.log('Trying mint() function...');
+          const mintAmount = ethers.parseUnits('1.0', decimals); // Try to mint 1 token
+          const mintTx = await tokenContract.mint(studentAddress, mintAmount);
+          await mintTx.wait();
+          console.log('Mint transaction successful!');
+          success = true;
+          method = 'mint';
+        } catch (error: any) {
+          console.log('Mint function failed:', error?.message || 'Unknown error');
+        }
+      }
+      
+      // Check new balance
+      const newBalance = await tokenContract.balanceOf(studentAddress);
+      console.log('New balance:', ethers.formatUnits(newBalance, decimals), symbol);
+      
+      if (success) {
+        console.log(`Successfully got tokens using ${method} function!`);
+        return {
+          success: true,
+          method,
+          oldBalance: ethers.formatUnits(currentBalance, decimals),
+          newBalance: ethers.formatUnits(newBalance, decimals),
+          symbol
+        };
+      } else {
+        console.log('All methods failed. You may need to get tokens from an external source.');
+        return {
+          success: false,
+          message: 'No available method to get tokens. Check if there\'s a faucet or ask the admin for tokens.',
+          tokenAddress,
+          tokenName: name,
+          tokenSymbol: symbol
+        };
+      }
+      
+    } catch (error) {
+      console.error('Error getting tokens:', error);
       throw error;
     }
   },
@@ -559,18 +855,24 @@ export const contractFunctions = {
   getStudentInfo: async (student: string) => {
     try {
       const contract = getContract();
+      console.log('Checking student registration for address:', student);
+      
       if (contract.hasRole) {
         // Check if the student has the STUDENT_ROLE
         const STUDENT_ROLE = await contract.STUDENT_ROLE();
+        console.log('STUDENT_ROLE:', STUDENT_ROLE);
+        
         const isRegistered = await contract.hasRole(STUDENT_ROLE, student);
+        console.log('Student registration status:', isRegistered);
+        
         return { isRegistered, registrationDate: Date.now() };
       } else {
         console.warn('hasRole function not found in contract ABI');
-        return { isRegistered: true, registrationDate: Date.now() };
+        throw new Error('Contract function not available');
       }
     } catch (error) {
       console.error('Error getting student info:', error);
-      return { isRegistered: true, registrationDate: Date.now() };
+      throw error;
     }
   },
 

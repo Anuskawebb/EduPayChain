@@ -48,16 +48,15 @@ const StudentDashboard: React.FC = () => {
   const [course, setCourse] = useState('');
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGettingTokens, setIsGettingTokens] = useState(false);
   const [certificateMetadata, setCertificateMetadata] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [hasRegisteredThisSession, setHasRegisteredThisSession] = useState(false);
-  const [showRegistrationSection, setShowRegistrationSection] = useState(true);
+  const [isCheckingRegistration, setIsCheckingRegistration] = useState(true);
 
   // Reset registration state when wallet changes
   useEffect(() => {
-    setShowRegistrationSection(true);
-    setHasRegisteredThisSession(false);
+    setIsCheckingRegistration(true);
   }, [address]);
 
   // Check if user is admin
@@ -87,27 +86,42 @@ const StudentDashboard: React.FC = () => {
   // Load student status
   useEffect(() => {
     const loadStudentStatus = async () => {
-      if (!address || !isConnected) return;
-
-      // Add a small delay to prevent interference with registration section
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!address || !isConnected) {
+        setIsCheckingRegistration(false);
+        return;
+      }
 
       try {
-        // Try to get status from the first available university, or use a default
+              // Check if student is registered
+      const studentInfo = await contractFunctions.getStudentInfo(address);
+      console.log('Student registration check:', studentInfo);
+      console.log('Student address being checked:', address);
+      
+      if (!studentInfo.isRegistered) {
+        // Student is not registered, show message to register first
+        setError('You need to register as a student first. Please visit the registration page or click "Register as Student" below.');
+        setIsCheckingRegistration(false);
+        return;
+      }
+      
+      // Student is registered, clear any previous errors
+      setError(null);
+
+        // Student is registered, now get payment status
         let status = null;
         if (universities.length > 0) {
           try {
             status = await contractFunctions.getStatus(address, universities[0].address);
             console.log('Student status from contract:', status);
           } catch (error) {
-            console.log('Could not get status from first university, using default unregistered status');
+            console.log('Could not get status from first university, using default status');
           }
         }
         
-        // If no status found, create a default unregistered status
+        // If no status found, create a default status for registered student
         if (!status) {
           status = {
-            isRegistered: false,
+            isRegistered: true,
             university: '',
             amountPaid: 0n,
             totalAmount: 0n,
@@ -115,86 +129,23 @@ const StudentDashboard: React.FC = () => {
             isRefunded: false,
             certificateTokenId: 0n
           };
-          console.log('Using default unregistered status');
+          console.log('Using default status for registered student');
         }
         
         console.log('Setting payment status:', status);
         setPaymentStatus(status);
       } catch (error) {
         console.error('Error loading student status:', error);
-        // Set default unregistered status on error
-        const defaultStatus = {
-          isRegistered: false,
-          university: '',
-          amountPaid: 0n,
-          totalAmount: 0n,
-          isVerified: false,
-          isRefunded: false,
-          certificateTokenId: 0n
-        };
-        console.log('Setting default status due to error:', defaultStatus);
-        setPaymentStatus(defaultStatus);
+        setError('Error checking registration status. Please try again.');
+      } finally {
+        setIsCheckingRegistration(false);
       }
     };
 
     loadStudentStatus();
   }, [address, isConnected, universities]);
 
-  // Register as student if not already registered
-  const handleRegisterAsStudent = async () => {
-    if (!signer || !address) return;
 
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      console.log('Registering as student with signer:', signer);
-      await contractFunctions.registerAsStudent(signer);
-      setSuccess('Successfully registered as student!');
-      setHasRegisteredThisSession(true);
-      setShowRegistrationSection(false);
-      
-      // Reload student status after successful registration
-      const loadStudentStatus = async () => {
-        if (!address || !isConnected) return;
-
-        try {
-          let status = null;
-          if (universities.length > 0) {
-            try {
-              status = await contractFunctions.getStatus(address, universities[0].address);
-            } catch (error) {
-              console.log('Could not get status from first university');
-            }
-          }
-          
-          if (!status) {
-            status = {
-              isRegistered: true, // Now registered
-              university: '',
-              amountPaid: 0n,
-              totalAmount: 0n,
-              isVerified: false,
-              isRefunded: false,
-              certificateTokenId: 0n
-            };
-          }
-          
-          setPaymentStatus(status);
-        } catch (error) {
-          console.error('Error reloading student status:', error);
-        }
-      };
-
-      loadStudentStatus();
-    } catch (error) {
-      console.error('Error registering as student:', error);
-      setError(error instanceof Error ? error.message : 'Failed to register as student');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // Load certificate metadata if verified
   useEffect(() => {
@@ -230,6 +181,65 @@ const StudentDashboard: React.FC = () => {
   };
 
   // Pay fees
+  const handleRegisterAsStudent = async () => {
+    if (!signer || !address) {
+      setError('Please connect your wallet first.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      console.log('Registering as student...');
+      await contractFunctions.registerAsStudent(signer);
+      setSuccess('Successfully registered as student! You can now pay fees.');
+      
+      // Reload student status
+      const studentInfo = await contractFunctions.getStudentInfo(address);
+      // Reload payment status for the selected university
+      if (selectedUniversity) {
+        const status = await contractFunctions.getStatus(address, selectedUniversity);
+        setPaymentStatus(status);
+      }
+    } catch (error: any) {
+      console.error('Error registering as student:', error);
+      const errorMessage = error?.message || error?.toString() || 'Failed to register as student';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGetTokens = async () => {
+    if (!signer || !address) {
+      setError('Please connect your wallet first.');
+      return;
+    }
+
+    setIsGettingTokens(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      console.log('Attempting to get tokens...');
+      const result = await contractFunctions.getTokens(signer);
+      
+      if (result.success) {
+        setSuccess(`Successfully got ${result.newBalance} ${result.symbol} tokens using ${result.method} function!`);
+      } else {
+        setError(`Failed to get tokens: ${result.message}`);
+      }
+    } catch (error: any) {
+      console.error('Error getting tokens:', error);
+      const errorMessage = error?.message || error?.toString() || 'Failed to get tokens';
+      setError(errorMessage);
+    } finally {
+      setIsGettingTokens(false);
+    }
+  };
+
   const handlePayFees = async () => {
     if (!signer || !address || !selectedUniversity || !studentName || !course) {
       setError('Please fill in all required fields.');
@@ -261,35 +271,41 @@ const StudentDashboard: React.FC = () => {
         course
       });
 
-      // Check if student is registered first
-      if (!paymentStatus?.isRegistered) {
-        setError('Please register as a student first before paying fees. Click "Register as Student" above.');
-        return;
-      }
+      console.log('Proceeding with payment - registration will be verified by smart contract');
 
-      // Double-check registration with contract
-      try {
-        const studentAddress = await signer.getAddress();
-        console.log('Verifying student registration for address:', studentAddress);
-        
-        // Try to call a read-only function to check if student exists
-        const status = await contractFunctions.getStatus(studentAddress, selectedUniversity);
-        console.log('Student status from contract:', status);
-      } catch (error) {
-        console.log('Student not found in contract, registration may have failed');
-        setError('Student registration verification failed. Please try registering again.');
-        return;
-      }
-
-      await contractFunctions.payFees(selectedUniversity, paymentAmount, studentName, course, signer);
-      setSuccess('Payment successful! Waiting for verification.');
+      // Execute the payment transaction
+      const paymentTx = await contractFunctions.payFees(selectedUniversity, paymentAmount, studentName, course, signer);
       
-      // Reload status
-      const status = await contractFunctions.getStatus(address, selectedUniversity);
-      setPaymentStatus(status);
-    } catch (error) {
+      // If we get here, the payment was successful
+      console.log('Payment transaction completed successfully:', paymentTx.hash);
+      setSuccess('Payment successful! Transaction hash: ' + paymentTx.hash.substring(0, 10) + '...');
+      
+      // Try to reload status, but don't fail the whole operation if this fails
+      try {
+        const status = await contractFunctions.getStatus(address, selectedUniversity);
+        setPaymentStatus(status);
+        console.log('Status reloaded successfully:', status);
+      } catch (statusError) {
+        console.warn('Failed to reload status after payment, but payment was successful:', statusError);
+        // Don't show this as an error to the user since the payment succeeded
+      }
+    } catch (error: any) {
       console.error('Error paying fees:', error);
-      setError(error instanceof Error ? error.message : 'Failed to pay fees');
+      
+      // Check if this is a user cancellation
+      if (error?.message?.includes('cancelled by user') || 
+          error?.message?.includes('user rejected') || 
+          error?.message?.includes('User denied')) {
+        setError('Transaction was cancelled by user');
+      } else {
+        // Check if the transaction was actually sent but failed
+        if (error?.hash) {
+          setError(`Payment transaction failed. Hash: ${error.hash.substring(0, 10)}... Check MetaMask for details.`);
+        } else {
+          const errorMessage = error?.message || error?.toString() || 'Failed to pay fees';
+          setError(errorMessage);
+        }
+      }
     } finally {
       setIsLoading(false);
     }
@@ -351,6 +367,22 @@ const StudentDashboard: React.FC = () => {
     );
   }
 
+  // Show loading while checking registration
+  if (isCheckingRegistration) {
+    return (
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <Loader className="h-8 w-8 text-primary-600 mx-auto mb-4 animate-spin" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Checking Registration</h2>
+            <p className="text-gray-600">Please wait while we verify your student registration...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       <Navigation />
@@ -361,104 +393,49 @@ const StudentDashboard: React.FC = () => {
           <p className="text-gray-600">Pay your university fees and track your payment status</p>
         </div>
 
-        {/* Debug Info */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mb-6">
-            <div className="text-sm">
-              <strong>Debug Info:</strong>
-              <div>Connected: {isConnected ? 'Yes' : 'No'}</div>
-              <div>Signer: {signer ? 'Available' : 'Not Available'}</div>
-              <div>Address: {address || 'Not Connected'}</div>
-              <div>Is Admin: {userIsAdmin ? 'Yes' : 'No'}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Error/Success Messages */}
+        {/* Error and Success Messages */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center">
-            <XCircle className="h-5 w-5 mr-2" />
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center">
-            <CheckCircle className="h-5 w-5 mr-2" />
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
             {success}
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Student Registration */}
-          {showRegistrationSection && !hasRegisteredThisSession && (
-            <div className="bg-white rounded-xl shadow-lg p-6 lg:col-span-2">
-              <div className="flex items-center mb-4">
-                <User className="h-6 w-6 text-primary-600 mr-2" />
-                <h2 className="text-xl font-semibold">Student Registration</h2>
+        {/* Registration Section */}
+        {error && error.includes('register as a student') && (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <AlertCircle className="h-5 w-5 mr-2" />
+                <span>You need to register as a student first to pay fees.</span>
               </div>
-              
-              <div className="text-center">
-                <p className="text-gray-600 mb-4">
-                  You need to register as a student before you can pay fees.
-                </p>
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="text-xs text-gray-500 mb-2">
-                    Debug: paymentStatus={paymentStatus ? 'exists' : 'null'}, 
-                    isRegistered={paymentStatus?.isRegistered ? 'true' : 'false'}, 
-                    hasRegisteredThisSession={hasRegisteredThisSession ? 'true' : 'false'},
-                    showRegistrationSection={showRegistrationSection ? 'true' : 'false'}
-                  </div>
+              <button
+                onClick={handleRegisterAsStudent}
+                disabled={isLoading}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                {isLoading ? (
+                  <Loader className="h-4 w-4 animate-spin" />
+                ) : (
+                  'Register as Student'
                 )}
-                <button
-                  onClick={handleRegisterAsStudent}
-                  disabled={isLoading}
-                  className="btn-primary"
-                >
-                  {isLoading ? (
-                    <Loader className="h-4 w-4 animate-spin" />
-                  ) : (
-                    'Register as Student'
-                  )}
-                </button>
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => setShowRegistrationSection(true)}
-                      className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
-                    >
-                      Force Show Registration
-                    </button>
-                    <button
-                      onClick={async () => {
-                        if (signer) {
-                          const address = await signer.getAddress();
-                          console.log('Testing registration for:', address);
-                          try {
-                            const status = await contractFunctions.getStatus(address, universities[0]?.address || '');
-                            console.log('Registration test result:', status);
-                          } catch (error) {
-                            console.log('Registration test error:', error);
-                          }
-                        }
-                      }}
-                      className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                      Test Registration Status
-                    </button>
-                  </div>
-                )}
-              </div>
+              </button>
             </div>
-          )}
+          </div>
+        )}
 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Payment Form */}
-          {paymentStatus?.isRegistered && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex items-center mb-4">
-                <CreditCard className="h-6 w-6 text-primary-600 mr-2" />
-                <h2 className="text-xl font-semibold">Pay Fees</h2>
-              </div>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center mb-4">
+              <CreditCard className="h-6 w-6 text-primary-600 mr-2" />
+              <h2 className="text-xl font-semibold">Pay Fees</h2>
+            </div>
 
               <div className="space-y-4">
               <div>
@@ -540,6 +517,19 @@ const StudentDashboard: React.FC = () => {
                 )}
               </div>
 
+              {/* Get Tokens Button */}
+              <button
+                onClick={handleGetTokens}
+                disabled={isGettingTokens}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors w-full mb-3"
+              >
+                {isGettingTokens ? (
+                  <Loader className="h-4 w-4 animate-spin" />
+                ) : (
+                  'Get Tokens (Free)'
+                )}
+              </button>
+
               <button
                 onClick={handlePayFees}
                 disabled={!selectedUniversity || !paymentAmount || parseFloat(paymentAmount) <= 0 || !studentName || isLoading}
@@ -551,9 +541,9 @@ const StudentDashboard: React.FC = () => {
                   'Pay Fees'
                 )}
               </button>
+              
             </div>
           </div>
-        )}
 
           {/* Payment Status */}
           <div className="bg-white rounded-xl shadow-lg p-6">

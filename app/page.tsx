@@ -76,7 +76,7 @@ const LandingPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               {!isConnected ? (
                 <Link 
-                  href="/student"
+                  href="/student/register"
                   className="btn-primary text-lg px-8 py-3 flex items-center space-x-2"
                 >
                   <span>Register as Student</span>
@@ -149,7 +149,7 @@ const LandingPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             <div className="text-center">
               <div className="bg-primary-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
                 1
@@ -162,13 +162,21 @@ const LandingPage: React.FC = () => {
               <div className="bg-primary-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
                 2
               </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Register as Student</h3>
+              <p className="text-gray-600">Complete one-time registration to link your wallet</p>
+            </div>
+
+            <div className="text-center">
+              <div className="bg-primary-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+                3
+              </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Select University</h3>
               <p className="text-gray-600">Choose your university and course from the list</p>
             </div>
 
             <div className="text-center">
               <div className="bg-primary-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                3
+                4
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Pay Fees</h3>
               <p className="text-gray-600">Pay your fees using ERC-20 tokens securely</p>
@@ -176,7 +184,7 @@ const LandingPage: React.FC = () => {
 
             <div className="text-center">
               <div className="bg-primary-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                4
+                5
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Get Certificate</h3>
               <p className="text-gray-600">Receive your NFT certificate after verification</p>
@@ -196,7 +204,7 @@ const LandingPage: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
-              href="/student"
+              href="/student/register"
               className="bg-white text-primary-600 hover:bg-gray-100 font-semibold py-3 px-8 rounded-lg transition-colors duration-200"
             >
               Start Now

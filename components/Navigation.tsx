@@ -72,6 +72,12 @@ const Navigation: React.FC = () => {
             >
               Student Dashboard
             </Link>
+            <Link 
+              href="/student/register" 
+              className="text-gray-700 hover:text-primary-600 transition-colors duration-200"
+            >
+              Student Registration
+            </Link>
             {isAdmin && (
               <Link 
                 href="/admin" 
@@ -152,6 +158,13 @@ const Navigation: React.FC = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Student Dashboard
+              </Link>
+              <Link 
+                href="/student/register" 
+                className="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Student Registration
               </Link>
               {isAdmin && (
                 <Link 
