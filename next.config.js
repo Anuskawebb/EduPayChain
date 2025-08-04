@@ -1,14 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Use stable Turbopack instead of experimental
-  turbopack: {
-    rules: {
-      '*.svg': {
-        loaders: ['@svgr/webpack'],
-        as: '*.js',
-      },
-    },
-  },
   webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
