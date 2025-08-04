@@ -25,14 +25,19 @@ interface University {
 
 const UniversitiesPage: React.FC = () => {
   const { isConnected, address } = useAccount();
-  const { getUniversities, isAdmin } = useEduPayChain();
+  const { 
+    isAdmin, 
+    universities: contractUniversities, 
+    eventLogs,
+    getAllUniversities,
+    refreshUniversityData 
+  } = useEduPayChain();
   const [universities, setUniversities] = useState<University[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   // Check if user is admin
-  const userIsAdmin = address ? isAdmin() : false;
+  const userIsAdmin = isAdmin;
 
   // Manual refresh function
   const handleRefresh = async () => {
@@ -42,7 +47,7 @@ const UniversitiesPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
-      const unis = await getUniversities();
+      const unis = await getAllUniversities();
       setUniversities(unis);
       
       console.log('Universities after refresh:', unis);
@@ -54,6 +59,11 @@ const UniversitiesPage: React.FC = () => {
     }
   };
 
+  // Update universities when contract universities change
+  useEffect(() => {
+    setUniversities(contractUniversities);
+  }, [contractUniversities]);
+
   // Load universities
   useEffect(() => {
     const loadUniversities = async () => {
@@ -62,7 +72,7 @@ const UniversitiesPage: React.FC = () => {
       try {
         setIsLoading(true);
         
-        const unis = await getUniversities();
+        const unis = await getAllUniversities();
         setUniversities(unis);
         
         console.log('Universities loaded:', unis);
@@ -75,7 +85,7 @@ const UniversitiesPage: React.FC = () => {
     };
 
     loadUniversities();
-  }, [isConnected, refreshKey]);
+  }, [isConnected, getAllUniversities]);
 
   if (!isConnected) {
     return (

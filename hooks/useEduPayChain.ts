@@ -1,8 +1,9 @@
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi'
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useWatchContractEvent } from 'wagmi'
 import { parseEther, formatEther, type Address } from 'viem'
 import { eduPayChainAbi } from '../lib/abis/edupaychainAbi'
 import { erc20Abi } from '../lib/abis/erc20Abi'
 import { CONTRACT_ADDRESS, ADMIN_ADDRESS } from '../lib/config'
+import { useState, useEffect } from 'react'
 
 export interface University {
   name: string
@@ -26,6 +27,10 @@ export const useEduPayChain = () => {
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   })
+  
+  // State for tracking events
+  const [universities, setUniversities] = useState<University[]>([])
+  const [eventLogs, setEventLogs] = useState<any[]>([])
 
   // Check if user is admin
   const isAdmin = address?.toLowerCase() === ADMIN_ADDRESS.toLowerCase()
@@ -188,6 +193,144 @@ export const useEduPayChain = () => {
     })
   }
 
+  // Watch for UniversityAdded events
+  useWatchContractEvent({
+    address: CONTRACT_ADDRESS,
+    abi: eduPayChainAbi,
+    eventName: 'UniversityAdded',
+    onLogs(logs) {
+      console.log('UniversityAdded event detected:', logs)
+      logs.forEach((log) => {
+        const { university, name } = log.args as { university: Address; name: string }
+        setEventLogs(prev => [...prev, {
+          type: 'UniversityAdded',
+          university,
+          name,
+          timestamp: new Date(),
+          blockNumber: log.blockNumber
+        }])
+        
+        // Refresh university data when new university is added
+        refreshUniversityData(university)
+      })
+    },
+  })
+
+  // Watch for UniversityRemoved events
+  useWatchContractEvent({
+    address: CONTRACT_ADDRESS,
+    abi: eduPayChainAbi,
+    eventName: 'UniversityRemoved',
+    onLogs(logs) {
+      console.log('UniversityRemoved event detected:', logs)
+      logs.forEach((log) => {
+        const { university } = log.args as { university: Address }
+        setEventLogs(prev => [...prev, {
+          type: 'UniversityRemoved',
+          university,
+          timestamp: new Date(),
+          blockNumber: log.blockNumber
+        }])
+        
+        // Remove university from local state
+        setUniversities(prev => prev.filter(uni => uni.address !== university))
+      })
+    },
+  })
+
+  // Watch for PaymentMade events
+  useWatchContractEvent({
+    address: CONTRACT_ADDRESS,
+    abi: eduPayChainAbi,
+    eventName: 'PaymentMade',
+    onLogs(logs) {
+      console.log('PaymentMade event detected:', logs)
+      logs.forEach((log) => {
+        const { student, university, amount } = log.args as { 
+          student: Address; 
+          university: Address; 
+          amount: bigint 
+        }
+        setEventLogs(prev => [...prev, {
+          type: 'PaymentMade',
+          student,
+          university,
+          amount,
+          timestamp: new Date(),
+          blockNumber: log.blockNumber
+        }])
+      })
+    },
+  })
+
+  // Watch for PaymentVerified events
+  useWatchContractEvent({
+    address: CONTRACT_ADDRESS,
+    abi: eduPayChainAbi,
+    eventName: 'PaymentVerified',
+    onLogs(logs) {
+      console.log('PaymentVerified event detected:', logs)
+      logs.forEach((log) => {
+        const { student, university, amount } = log.args as { 
+          student: Address; 
+          university: Address; 
+          amount: bigint 
+        }
+        setEventLogs(prev => [...prev, {
+          type: 'PaymentVerified',
+          student,
+          university,
+          amount,
+          timestamp: new Date(),
+          blockNumber: log.blockNumber
+        }])
+      })
+    },
+  })
+
+  // Watch for CertificateIssued events
+  useWatchContractEvent({
+    address: CONTRACT_ADDRESS,
+    abi: eduPayChainAbi,
+    eventName: 'CertificateIssued',
+    onLogs(logs) {
+      console.log('CertificateIssued event detected:', logs)
+      logs.forEach((log) => {
+        const { student, tokenId, uri } = log.args as { 
+          student: Address; 
+          tokenId: bigint; 
+          uri: string 
+        }
+        setEventLogs(prev => [...prev, {
+          type: 'CertificateIssued',
+          student,
+          tokenId,
+          uri,
+          timestamp: new Date(),
+          blockNumber: log.blockNumber
+        }])
+      })
+    },
+  })
+
+  // Function to refresh university data
+  const refreshUniversityData = async (universityAddress: Address) => {
+    try {
+      // This would typically fetch university data from the contract
+      // For now, we'll just log that we should refresh
+      console.log('Should refresh university data for:', universityAddress)
+    } catch (error) {
+      console.error('Error refreshing university data:', error)
+    }
+  }
+
+  // Function to get all universities (you'll need to implement this based on your contract)
+  const getAllUniversities = async (): Promise<University[]> => {
+    // This is a placeholder - you'll need to implement based on your contract's structure
+    // You might need to track university addresses separately or use events to build the list
+    return universities
+  }
+
   return {
     // State
     address,
@@ -199,6 +342,8 @@ export const useEduPayChain = () => {
     isConfirming,
     isConfirmed,
     error,
+    universities,
+    eventLogs,
 
     // Read functions
     getUniversity,
@@ -216,6 +361,10 @@ export const useEduPayChain = () => {
     verifyAndRelease,
     refund,
     getTokensFromFaucet,
+
+    // Event functions
+    getAllUniversities,
+    refreshUniversityData,
 
     // Utilities
     formatEther,

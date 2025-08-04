@@ -30,10 +30,12 @@ const AdminDashboard: React.FC = () => {
     removeUniversity,
     verifyAndRelease,
     refund,
+    eventLogs,
     isPending,
     isConfirming,
     isConfirmed,
-    error
+    error,
+    formatEther
   } = useEduPayChain();
 
   const [localError, setLocalError] = useState<string | null>(null);
@@ -155,6 +157,56 @@ const AdminDashboard: React.FC = () => {
           <p className="text-gray-600">Manage universities, verify payments, and issue certificates</p>
           
 
+        </div>
+
+        {/* Event Logs Section */}
+        <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center mb-4">
+            <RefreshCw className="h-6 w-6 text-primary-600 mr-2" />
+            <h2 className="text-xl font-semibold">Recent Events</h2>
+          </div>
+
+          <div className="space-y-3 max-h-64 overflow-y-auto">
+            {eventLogs.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">
+                No events detected yet. Events will appear here in real-time.
+              </p>
+            ) : (
+              eventLogs.slice(-10).reverse().map((event, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                        event.type === 'UniversityAdded' ? 'bg-green-100 text-green-800' :
+                        event.type === 'UniversityRemoved' ? 'bg-red-100 text-red-800' :
+                        event.type === 'PaymentMade' ? 'bg-blue-100 text-blue-800' :
+                        event.type === 'PaymentVerified' ? 'bg-purple-100 text-purple-800' :
+                        event.type === 'CertificateIssued' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {event.type}
+                      </span>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {event.type === 'UniversityAdded' && `University "${event.name}" added`}
+                        {event.type === 'UniversityRemoved' && `University removed`}
+                        {event.type === 'PaymentMade' && `Payment of ${formatEther(event.amount)} ETH made`}
+                        {event.type === 'PaymentVerified' && `Payment of ${formatEther(event.amount)} ETH verified`}
+                        {event.type === 'CertificateIssued' && `Certificate #${event.tokenId.toString()} issued`}
+                      </p>
+                      {event.university && (
+                        <p className="text-xs text-gray-400">
+                          {event.university.slice(0, 6)}...{event.university.slice(-4)}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {event.timestamp.toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         {/* Error/Success Messages */}
