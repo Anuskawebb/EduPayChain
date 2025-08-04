@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useWallet } from '../../contexts/WalletContext';
-import { contractFunctions, formatEther, isAdmin, debugUniversitiesState, testAddUniversity, setupUniversityEventListeners } from '../../utils/contract';
+import { useAccount } from 'wagmi';
+import { useEduPayChain } from '../../hooks/useEduPayChain';
+import { formatEther } from 'viem';
 import Navigation from '../../components/Navigation';
 import { 
   GraduationCap, 
@@ -23,14 +24,15 @@ interface University {
 }
 
 const UniversitiesPage: React.FC = () => {
-  const { isConnected, address } = useWallet();
+  const { isConnected, address } = useAccount();
+  const { getUniversities, isAdmin } = useEduPayChain();
   const [universities, setUniversities] = useState<University[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Check if user is admin
-  const userIsAdmin = address ? isAdmin(address) : false;
+  const userIsAdmin = address ? isAdmin() : false;
 
   // Manual refresh function
   const handleRefresh = async () => {
@@ -40,10 +42,7 @@ const UniversitiesPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
-      // Debug the current state
-      await debugUniversitiesState();
-      
-      const unis = await contractFunctions.getUniversities();
+      const unis = await getUniversities();
       setUniversities(unis);
       
       console.log('Universities after refresh:', unis);
@@ -63,10 +62,7 @@ const UniversitiesPage: React.FC = () => {
       try {
         setIsLoading(true);
         
-        // Debug the current state
-        await debugUniversitiesState();
-        
-        const unis = await contractFunctions.getUniversities();
+        const unis = await getUniversities();
         setUniversities(unis);
         
         console.log('Universities loaded:', unis);
@@ -79,21 +75,6 @@ const UniversitiesPage: React.FC = () => {
     };
 
     loadUniversities();
-
-    // Setup smart contract event listeners
-    setupUniversityEventListeners(loadUniversities);
-
-    // Listen for custom event when universities are updated
-    const handleUniversitiesUpdated = () => {
-      loadUniversities();
-    };
-
-    window.addEventListener('universitiesUpdated', handleUniversitiesUpdated);
-
-    // Cleanup event listeners on unmount
-    return () => {
-      window.removeEventListener('universitiesUpdated', handleUniversitiesUpdated);
-    };
   }, [isConnected, refreshKey]);
 
   if (!isConnected) {
@@ -133,12 +114,15 @@ const UniversitiesPage: React.FC = () => {
             </button>
             {userIsAdmin && (
               <button
-                onClick={testAddUniversity}
+                onClick={() => {
+                  // Navigate to admin page for adding universities
+                  window.location.href = '/admin';
+                }}
                 className="btn-primary flex items-center"
-                title="Add test university"
+                title="Go to admin dashboard"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Test Add
+                Admin
               </button>
             )}
           </div>

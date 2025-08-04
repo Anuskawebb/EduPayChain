@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useWallet } from '../contexts/WalletContext';
+import { useAccount } from 'wagmi';
 import Navigation from '../components/Navigation';
 import { 
   GraduationCap, 
@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
-  const { isConnected } = useWallet();
+  const { isConnected } = useAccount();
 
   const features = [
     {
