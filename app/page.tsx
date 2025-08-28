@@ -56,7 +56,7 @@ const LandingPage: React.FC = () => {
       <Navigation />
       
       {/* Hero Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8">
+      <section className="relative pt-36 pb-12 px-4 sm:px-6 lg:px-8 mb-16 mt-20">
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
@@ -104,7 +104,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white mt-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -244,4 +244,4 @@ const LandingPage: React.FC = () => {
   );
 };
 
-export default LandingPage; 
+export default LandingPage;

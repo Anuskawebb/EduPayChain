@@ -95,7 +95,7 @@ const Navigation: React.FC = () => {
           </div>
 
           {/* Wallet Connection */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-wrap justify-end">
             {isConnected && (
               <AccountSelector 
                 onAccountSelect={handleAccountSelect}
@@ -107,21 +107,22 @@ const Navigation: React.FC = () => {
               <button
                 onClick={handleSwitchAccount}
                 disabled={isSwitchingAccount}
-                className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-colors duration-200 disabled:opacity-50"
+                className="flex items-center space-x-1 sm:space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 sm:px-3 py-2 rounded-lg transition-colors duration-200 disabled:opacity-50 text-xs sm:text-sm"
                 title="Force account selection"
               >
                 <RefreshCw className={`h-4 w-4 ${isSwitchingAccount ? 'animate-spin' : ''}`} />
-                <span className="text-sm">Switch Account</span>
+                <span className="whitespace-nowrap hidden xs:inline">Switch Account</span>
+                <span className="whitespace-nowrap xs:hidden">Switch</span>
               </button>
             )}
             
             <button
               onClick={handleWalletAction}
               disabled={isLoading}
-              className="flex items-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 disabled:opacity-50"
+              className="flex items-center space-x-1 sm:space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-2 sm:px-4 py-2 rounded-lg transition-colors duration-200 disabled:opacity-50 text-xs sm:text-sm"
             >
               <Wallet className="h-4 w-4" />
-              <span>
+              <span className="whitespace-nowrap">
                 {isLoading 
                   ? 'Connecting...' 
                   : isConnected 
@@ -190,4 +191,4 @@ const Navigation: React.FC = () => {
   );
 };
 
-export default Navigation; 
+export default Navigation;
