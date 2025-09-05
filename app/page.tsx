@@ -56,9 +56,9 @@ const LandingPage: React.FC = () => {
       <Navigation />
       
       {/* Hero Section */}
-      <section className="relative min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 hero-pattern overflow-hidden">
         <div className="max-w-7xl mx-auto w-full">
-          <div className="hero-surface hero-pattern px-6 sm:px-10 md:px-14 py-14 md:py-20 text-center overflow-hidden">
+          <div className="px-6 sm:px-10 md:px-14 py-14 md:py-20 text-center">
             <h1 className="heading-display text-4xl md:text-6xl lg:text-7xl mb-6">
               <span>EduPayChain</span>
               <br />
@@ -104,7 +104,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white mt-8">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 section-wrap">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="heading-display text-3xl md:text-4xl mb-4">
@@ -120,7 +120,7 @@ const LandingPage: React.FC = () => {
             {features.map((feature, index) => (
               <div 
                 key={index}
-                className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm card-hover"
+                className="feature-card p-6 card-hover"
               >
                 <div className="mb-4">
                   {feature.icon}
@@ -151,7 +151,7 @@ const LandingPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             <div className="text-center">
-              <div className="bg-primary-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+              <div className="step-badge rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
                 1
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Connect Wallet</h3>
@@ -159,7 +159,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="text-center">
-              <div className="bg-primary-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+              <div className="step-badge rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
                 2
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Register as Student</h3>
@@ -167,7 +167,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="text-center">
-              <div className="bg-primary-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+              <div className="step-badge rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
                 3
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Select University</h3>
@@ -175,7 +175,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="text-center">
-              <div className="bg-primary-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+              <div className="step-badge rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
                 4
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Pay Fees</h3>
@@ -183,7 +183,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="text-center">
-              <div className="bg-primary-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+              <div className="step-badge rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
                 5
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Get Certificate</h3>
@@ -194,24 +194,24 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-primary-600">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 hero-pattern">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+          <h2 className="heading-display text-3xl md:text-4xl text-gray-900 mb-4">
             Ready to Get Started?
           </h2>
-          <p className="text-xl text-primary-100 mb-8">
+          <p className="subheading-muted text-xl mb-8">
             Join the future of education payments with EduPayChain.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               href="/student/register"
-              className="bg-white text-primary-600 hover:bg-gray-100 font-semibold py-3 px-8 rounded-lg transition-colors duration-200"
+              className="btn-cta font-semibold py-3 px-8 rounded-lg"
             >
               Start Now
             </Link>
             <Link 
               href="/universities"
-              className="border-2 border-white text-white hover:bg-white hover:text-primary-600 font-semibold py-3 px-8 rounded-lg transition-colors duration-200"
+              className="btn-ghost font-semibold py-3 px-8 rounded-lg"
             >
               View Universities
             </Link>
@@ -220,17 +220,26 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+      <footer className="section-wrap py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
-              <GraduationCap className="h-8 w-8 text-primary-400" />
+              <svg className="logo-cap" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <defs>
+                  <linearGradient id="capGradFooter" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#5b7cfa" />
+                    <stop offset="100%" stopColor="#6c5ce7" />
+                  </linearGradient>
+                </defs>
+                <path d="M24 6L4 14l20 8 20-8-20-8z" fill="url(#capGradFooter)"/>
+                <path d="M10 22v6c0 2 7 6 14 6s14-4 14-6v-6l-14 6-14-6z" fill="#e6e9ff"/>
+              </svg>
               <span className="text-xl font-bold">EduPayChain</span>
             </div>
-            <p className="text-gray-400 mb-4">
+            <p className="subheading-muted mb-4">
               Decentralized University Fee Payment Platform
             </p>
-            <div className="flex justify-center space-x-6 text-sm text-gray-400">
+            <div className="flex justify-center space-x-6 text-sm subheading-muted">
               <span>© 2024 EduPayChain</span>
               <span>•</span>
               <span>Built with Next.js & Ethers.js</span>

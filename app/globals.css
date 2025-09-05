@@ -160,6 +160,31 @@ a {
   border-color: #d7ddff;
 }
 
+/* Themed section styles */
+.section-wrap {
+  background: #ffffff;
+}
+
+.section-heading {
+  @apply heading-display;
+}
+
+.section-subheading {
+  @apply subheading-muted;
+}
+
+.feature-card {
+  background: #ffffff;
+  border: 1px solid #eef2ff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(16,24,40,0.05);
+}
+
+.step-badge {
+  background: linear-gradient(90deg, #5b7cfa 0%, #6c5ce7 100%);
+  color: #fff;
+}
+
 /* Card hover effects */
 .card-hover {
   transition: all 0.3s ease;
