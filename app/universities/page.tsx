@@ -118,8 +118,8 @@ const UniversitiesPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Universities</h1>
-            <p className="text-gray-600">Browse approved universities and their course offerings</p>
+            <h1 className="heading-display text-3xl font-bold mb-2">Universities</h1>
+            <p className="subheading-muted">Browse approved universities and their course offerings</p>
           </div>
           <div className="flex space-x-2">
             <button
@@ -134,7 +134,7 @@ const UniversitiesPage: React.FC = () => {
             {userIsAdmin && (
               <button
                 onClick={testAddUniversity}
-                className="btn-primary flex items-center"
+                className="btn-cta flex items-center"
                 title="Add test university"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -180,11 +180,11 @@ const UniversitiesPage: React.FC = () => {
                 {universities.map((university, index) => (
                   <div 
                     key={index}
-                    className="bg-white rounded-xl shadow-lg p-6 card-hover"
+                    className="feature-card p-6 card-hover"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center">
-                        <Building className="h-8 w-8 text-primary-600 mr-3" />
+                        <Building className="h-8 w-8 text-blue-500 mr-3" />
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900">
                             {university.name}
@@ -247,7 +247,7 @@ const UniversitiesPage: React.FC = () => {
               <div className="mt-4">
                 <a 
                   href="/admin"
-                  className="btn-primary inline-flex items-center"
+                  className="btn-cta inline-flex items-center"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add University
@@ -259,7 +259,7 @@ const UniversitiesPage: React.FC = () => {
 
         {/* Stats Section */}
         {universities.length > 0 && (
-          <div className="mt-12 bg-white rounded-xl shadow-lg p-6">
+          <div className="mt-12 feature-card p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Platform Statistics</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">

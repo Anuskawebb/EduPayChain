@@ -389,8 +389,8 @@ const StudentDashboard: React.FC = () => {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Dashboard</h1>
-          <p className="text-gray-600">Pay your university fees and track your payment status</p>
+          <h1 className="heading-display text-3xl font-bold mb-2">Student Dashboard</h1>
+          <p className="subheading-muted">Pay your university fees and track your payment status</p>
         </div>
 
         {/* Error and Success Messages */}
@@ -431,10 +431,10 @@ const StudentDashboard: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Payment Form */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="feature-card p-6">
             <div className="flex items-center mb-4">
-              <CreditCard className="h-6 w-6 text-primary-600 mr-2" />
-              <h2 className="text-xl font-semibold">Pay Fees</h2>
+              <CreditCard className="h-6 w-6 text-blue-500 mr-2" />
+              <h2 className="text-xl font-semibold text-gray-900">Pay Fees</h2>
             </div>
 
               <div className="space-y-4">
@@ -533,7 +533,7 @@ const StudentDashboard: React.FC = () => {
               <button
                 onClick={handlePayFees}
                 disabled={!selectedUniversity || !paymentAmount || parseFloat(paymentAmount) <= 0 || !studentName || isLoading}
-                className="btn-primary w-full"
+                className="btn-cta w-full"
               >
                 {isLoading ? (
                   <Loader className="h-4 w-4 animate-spin" />
@@ -546,10 +546,10 @@ const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Payment Status */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="feature-card p-6">
             <div className="flex items-center mb-4">
-              <Clock className="h-6 w-6 text-primary-600 mr-2" />
-              <h2 className="text-xl font-semibold">Payment Status</h2>
+              <Clock className="h-6 w-6 text-green-500 mr-2" />
+              <h2 className="text-xl font-semibold text-gray-900">Payment Status</h2>
             </div>
 
             <div className="space-y-4">
@@ -597,10 +597,10 @@ const StudentDashboard: React.FC = () => {
 
           {/* Certificate Display */}
           {paymentStatus?.isVerified && certificateMetadata && (
-            <div className="bg-white rounded-xl shadow-lg p-6 lg:col-span-2">
+            <div className="feature-card p-6 lg:col-span-2">
               <div className="flex items-center mb-4">
-                <Award className="h-6 w-6 text-primary-600 mr-2" />
-                <h2 className="text-xl font-semibold">Your Certificate</h2>
+                <Award className="h-6 w-6 text-orange-500 mr-2" />
+                <h2 className="text-xl font-semibold text-gray-900">Your Certificate</h2>
               </div>
 
               <div className="border border-gray-200 rounded-lg p-4">

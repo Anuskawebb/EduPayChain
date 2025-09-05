@@ -216,7 +216,7 @@ const AdminDashboard: React.FC = () => {
         <Navigation />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <Shield className="h-16 w-16 text-primary-600 mx-auto mb-4" />
+            <Shield className="h-16 w-16 text-blue-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Connect Your Wallet</h2>
             <p className="text-gray-600">Please connect your wallet to access the admin dashboard.</p>
           </div>
@@ -246,8 +246,8 @@ const AdminDashboard: React.FC = () => {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage universities, verify payments, and issue certificates</p>
+          <h1 className="heading-display text-3xl font-bold mb-2">Admin Dashboard</h1>
+          <p className="subheading-muted">Manage universities, verify payments, and issue certificates</p>
           
 
         </div>
@@ -269,10 +269,10 @@ const AdminDashboard: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Add University Form */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="feature-card p-6">
             <div className="flex items-center mb-4">
-              <Building className="h-6 w-6 text-primary-600 mr-2" />
-              <h2 className="text-xl font-semibold">Add University</h2>
+              <Building className="h-6 w-6 text-blue-500 mr-2" />
+              <h2 className="text-xl font-semibold text-gray-900 text-gray-900">Add University</h2>
             </div>
 
             <div className="space-y-4">
@@ -332,7 +332,7 @@ const AdminDashboard: React.FC = () => {
               <button
                 onClick={handleAddUniversity}
                 disabled={!universityName || !universityAddress || !universityCourse || !universityFee || isLoading}
-                className="btn-primary w-full"
+                className="btn-cta w-full"
               >
                 {isLoading ? (
                   <Loader className="h-4 w-4 animate-spin" />
@@ -344,10 +344,10 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Universities List */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="feature-card p-6">
             <div className="flex items-center mb-4">
-              <GraduationCap className="h-6 w-6 text-primary-600 mr-2" />
-              <h2 className="text-xl font-semibold">Universities</h2>
+              <GraduationCap className="h-6 w-6 text-blue-500 mr-2" />
+              <h2 className="text-xl font-semibold text-gray-900">Universities</h2>
             </div>
 
             <div className="space-y-4">
@@ -358,7 +358,7 @@ const AdminDashboard: React.FC = () => {
                       <h3 className="font-semibold text-gray-900">{university.name}</h3>
                       <p className="text-sm text-gray-600">{university.course}</p>
                       <p className="text-sm text-gray-500">{university.address}</p>
-                      <p className="text-sm font-medium text-primary-600">
+                      <p className="text-sm font-medium text-blue-500">
                         {formatEther(university.fee)} ETH
                       </p>
                     </div>
@@ -380,10 +380,10 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Verify and Release Certificate */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="feature-card p-6">
             <div className="flex items-center mb-4">
-              <Award className="h-6 w-6 text-primary-600 mr-2" />
-              <h2 className="text-xl font-semibold">Verify & Issue Certificate</h2>
+              <Award className="h-6 w-6 text-blue-500 mr-2" />
+              <h2 className="text-xl font-semibold text-gray-900">Verify & Issue Certificate</h2>
             </div>
 
             <div className="space-y-4">
@@ -459,10 +459,10 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Students List */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="feature-card p-6">
             <div className="flex items-center mb-4">
-              <Users className="h-6 w-6 text-primary-600 mr-2" />
-              <h2 className="text-xl font-semibold">Payment Records</h2>
+              <Users className="h-6 w-6 text-blue-500 mr-2" />
+              <h2 className="text-xl font-semibold text-gray-900">Payment Records</h2>
             </div>
 
             <div className="space-y-4">
@@ -476,7 +476,7 @@ const AdminDashboard: React.FC = () => {
                       <p className="text-sm text-gray-600">{student.university}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-primary-600">
+                      <p className="text-sm font-medium text-blue-500">
                         {formatEther(student.amountPaid)} / {formatEther(student.totalAmount)} ETH
                       </p>
                       {student.isVerified ? (

@@ -20,32 +20,32 @@ const LandingPage: React.FC = () => {
 
   const features = [
     {
-      icon: <CreditCard className="h-8 w-8 text-primary-600" />,
+      icon: <CreditCard className="h-8 w-8 text-blue-500" />,
       title: 'ERC-20 Token Payments',
       description: 'Secure fee payments using ERC-20 tokens with on-chain verification and transparency.'
     },
     {
-      icon: <Shield className="h-8 w-8 text-primary-600" />,
+      icon: <Shield className="h-8 w-8 text-green-500" />,
       title: 'On-Chain Verification',
       description: 'All payments and verifications are recorded on the blockchain for complete transparency.'
     },
     {
-      icon: <Award className="h-8 w-8 text-primary-600" />,
+      icon: <Award className="h-8 w-8 text-orange-500" />,
       title: 'NFT Certificates',
       description: 'Receive unique NFT certificates after payment verification, stored securely on the blockchain.'
     },
     {
-      icon: <Users className="h-8 w-8 text-primary-600" />,
+      icon: <Users className="h-8 w-8 text-purple-500" />,
       title: 'University Management',
       description: 'Admin-controlled university registration with customizable courses and fee structures.'
     },
     {
-      icon: <Zap className="h-8 w-8 text-primary-600" />,
+      icon: <Zap className="h-8 w-8 text-pink-500" />,
       title: 'Real-time Notifications',
       description: 'Instant notifications via EPNS/Push Protocol for payment updates and certificate issuance.'
     },
     {
-      icon: <GraduationCap className="h-8 w-8 text-primary-600" />,
+      icon: <GraduationCap className="h-8 w-8 text-indigo-500" />,
       title: 'Decentralized Education',
       description: 'Revolutionizing education payments with blockchain technology and smart contracts.'
     }
@@ -103,6 +103,126 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      {/* How It Works Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="heading-display text-3xl md:text-4xl mb-4">
+              How It Works
+            </h2>
+            <p className="subheading-muted text-xl max-w-2xl mx-auto">
+              Simple steps to complete your university fee payment and receive your certificate.
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto">
+            <div className="space-y-8">
+              <div className="step-card animate-slide-in-left" style={{animationDelay: '0.1s'}}>
+                <div className="flex items-start space-x-6">
+                  <div className="flex-shrink-0">
+                    <div className="step-badge step-badge-hover rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold">
+                      1
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Connect Wallet</h3>
+                    <p className="subheading-muted">Connect your MetaMask wallet to get started</p>
+                    <div className="step-expanded">
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        Install MetaMask browser extension and create your wallet. Connect to Sepolia testnet for testing. 
+                        Your wallet address will be used to identify you as a student and process all blockchain transactions.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="step-card animate-slide-in-left" style={{animationDelay: '0.2s'}}>
+                <div className="flex items-start space-x-6">
+                  <div className="flex-shrink-0">
+                    <div className="step-badge step-badge-hover rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold">
+                      2
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Register as Student</h3>
+                    <p className="subheading-muted">Complete one-time registration to link your wallet</p>
+                    <div className="step-expanded">
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        Register your wallet address on the blockchain to receive the STUDENT_ROLE. This one-time process 
+                        links your identity to the smart contract and enables you to make fee payments and receive certificates.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="step-card animate-slide-in-left" style={{animationDelay: '0.3s'}}>
+                <div className="flex items-start space-x-6">
+                  <div className="flex-shrink-0">
+                    <div className="step-badge step-badge-hover rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold">
+                      3
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Select University</h3>
+                    <p className="subheading-muted">Choose your university and course from the list</p>
+                    <div className="step-expanded">
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        Browse through verified universities and their available courses. Each university sets their own 
+                        fee structure in ERC-20 tokens. Select the course you want to enroll in and view the payment requirements.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="step-card animate-slide-in-left" style={{animationDelay: '0.4s'}}>
+                <div className="flex items-start space-x-6">
+                  <div className="flex-shrink-0">
+                    <div className="step-badge step-badge-hover rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold">
+                      4
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Pay Fees</h3>
+                    <p className="subheading-muted">Pay your fees using ERC-20 tokens securely</p>
+                    <div className="step-expanded">
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        Approve the smart contract to spend your ERC-20 tokens, then execute the payment transaction. 
+                        Your payment is recorded on-chain with metadata including your name, course, and university. 
+                        The transaction is transparent and verifiable by anyone.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="step-card animate-slide-in-left" style={{animationDelay: '0.5s'}}>
+                <div className="flex items-start space-x-6">
+                  <div className="flex-shrink-0">
+                    <div className="step-badge step-badge-hover rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold">
+                      5
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Get Certificate</h3>
+                    <p className="subheading-muted">Receive your NFT certificate after verification</p>
+                    <div className="step-expanded">
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        Once your payment is verified by the university admin, an NFT certificate is minted to your wallet. 
+                        This certificate contains your course details, completion date, and is permanently stored on the blockchain. 
+                        You can view and transfer your certificate anytime.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 section-wrap">
         <div className="max-w-7xl mx-auto">
@@ -120,7 +240,8 @@ const LandingPage: React.FC = () => {
             {features.map((feature, index) => (
               <div 
                 key={index}
-                className="feature-card p-6 card-hover"
+                className="feature-card p-6 card-hover animate-fade-in-up"
+                style={{animationDelay: `${index * 0.1}s`}}
               >
                 <div className="mb-4">
                   {feature.icon}
@@ -133,62 +254,6 @@ const LandingPage: React.FC = () => {
                 </p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="heading-display text-3xl md:text-4xl mb-4">
-              How It Works
-            </h2>
-            <p className="subheading-muted text-xl max-w-2xl mx-auto">
-              Simple steps to complete your university fee payment and receive your certificate.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-            <div className="text-center">
-              <div className="step-badge rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                1
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Connect Wallet</h3>
-              <p className="subheading-muted">Connect your MetaMask wallet to get started</p>
-            </div>
-
-            <div className="text-center">
-              <div className="step-badge rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                2
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Register as Student</h3>
-              <p className="subheading-muted">Complete one-time registration to link your wallet</p>
-            </div>
-
-            <div className="text-center">
-              <div className="step-badge rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                3
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Select University</h3>
-              <p className="subheading-muted">Choose your university and course from the list</p>
-            </div>
-
-            <div className="text-center">
-              <div className="step-badge rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                4
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Pay Fees</h3>
-              <p className="subheading-muted">Pay your fees using ERC-20 tokens securely</p>
-            </div>
-
-            <div className="text-center">
-              <div className="step-badge rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                5
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Get Certificate</h3>
-              <p className="subheading-muted">Receive your NFT certificate after verification</p>
-            </div>
           </div>
         </div>
       </section>
@@ -234,12 +299,12 @@ const LandingPage: React.FC = () => {
                 <path d="M24 6L4 14l20 8 20-8-20-8z" fill="url(#capGradFooter)"/>
                 <path d="M10 22v6c0 2 7 6 14 6s14-4 14-6v-6l-14 6-14-6z" fill="#e6e9ff"/>
               </svg>
-              <span className="text-xl font-bold">EduPayChain</span>
+              <span className="text-xl font-bold text-gray-900">EduPayChain</span>
             </div>
-            <p className="subheading-muted mb-4">
+            <p className="text-gray-600 mb-4">
               Decentralized University Fee Payment Platform
             </p>
-            <div className="flex justify-center space-x-6 text-sm subheading-muted">
+            <div className="flex justify-center space-x-6 text-sm text-gray-600">
               <span>© 2024 EduPayChain</span>
               <span>•</span>
               <span>Built with Next.js & Ethers.js</span>

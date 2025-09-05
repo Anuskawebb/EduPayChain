@@ -142,8 +142,8 @@ const StudentRegistration: React.FC = () => {
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Registration</h1>
-          <p className="text-gray-600">Register as a student to access the payment dashboard</p>
+          <h1 className="heading-display text-3xl font-bold mb-2">Student Registration</h1>
+          <p className="subheading-muted">Register as a student to access the payment dashboard</p>
         </div>
 
         {/* Progress Steps */}
@@ -189,10 +189,10 @@ const StudentRegistration: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Registration Form */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="feature-card p-6">
             <div className="flex items-center mb-6">
-              <User className="h-8 w-8 text-primary-600 mr-3" />
-              <h2 className="text-2xl font-semibold">Register as Student</h2>
+              <User className="h-8 w-8 text-blue-500 mr-3" />
+              <h2 className="text-2xl font-semibold text-gray-900">Register as Student</h2>
             </div>
 
             <div className="space-y-6">
@@ -231,7 +231,7 @@ const StudentRegistration: React.FC = () => {
                   <button
                     onClick={handleAddressSubmit}
                     disabled={!manualWalletAddress || manualWalletAddress.length < 42}
-                    className="btn-primary w-full flex items-center justify-center"
+                    className="btn-cta w-full flex items-center justify-center"
                   >
                     Continue
                     <ArrowRight className="h-4 w-4 ml-2" />
@@ -268,7 +268,7 @@ const StudentRegistration: React.FC = () => {
 
                                      <button
                      onClick={handleConnectWallet}
-                     className="btn-primary w-full flex items-center justify-center"
+                     className="btn-cta w-full flex items-center justify-center"
                    >
                      <Wallet className="h-4 w-4 mr-2" />
                      Connect Wallet
@@ -361,7 +361,7 @@ const StudentRegistration: React.FC = () => {
                                      <button
                      onClick={handleRegisterAsStudent}
                      disabled={isLoading || !addressesMatch}
-                     className="btn-primary w-full flex items-center justify-center"
+                     className="btn-cta w-full flex items-center justify-center"
                    >
                     {isLoading ? (
                       <>
@@ -381,10 +381,10 @@ const StudentRegistration: React.FC = () => {
           </div>
 
           {/* Information Panel */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="feature-card p-6">
             <div className="flex items-center mb-6">
-              <GraduationCap className="h-8 w-8 text-primary-600 mr-3" />
-              <h2 className="text-2xl font-semibold">Registration Process</h2>
+              <GraduationCap className="h-8 w-8 text-purple-500 mr-3" />
+              <h2 className="text-2xl font-semibold text-gray-900">Registration Process</h2>
             </div>
 
             <div className="space-y-4">
