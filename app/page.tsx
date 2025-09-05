@@ -57,27 +57,27 @@ const LandingPage: React.FC = () => {
       
       {/* Hero Section */}
       <section className="relative min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              <span className="gradient-text">EduPayChain</span>
+        <div className="max-w-7xl mx-auto w-full">
+          <div className="hero-surface hero-pattern px-6 sm:px-10 md:px-14 py-14 md:py-20 text-center overflow-hidden">
+            <h1 className="heading-display text-4xl md:text-6xl lg:text-7xl mb-6">
+              <span>EduPayChain</span>
               <br />
-              <span className="text-2xl md:text-4xl text-gray-600">
+              <span className="text-2xl md:text-4xl subheading-muted font-semibold">
                 Decentralized University Fee Payment
               </span>
             </h1>
-            
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+
+            <p className="subheading-muted text-lg md:text-xl mb-10 max-w-3xl mx-auto">
               Revolutionizing education payments with blockchain technology. 
               Pay fees securely, receive NFT certificates, and experience 
               transparent university fee management.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className="relative z-[1] flex flex-col sm:flex-row gap-4 justify-center items-center">
               {!isConnected ? (
                 <Link 
                   href="/student/register"
-                  className="btn-primary text-lg px-8 py-3 flex items-center space-x-2"
+                  className="btn-cta text-lg px-8 py-3 flex items-center space-x-2"
                 >
                   <span>Register as Student</span>
                   <ArrowRight className="h-5 w-5" />
@@ -85,7 +85,7 @@ const LandingPage: React.FC = () => {
               ) : (
                 <Link 
                   href="/student"
-                  className="btn-primary text-lg px-8 py-3 flex items-center space-x-2"
+                  className="btn-cta text-lg px-8 py-3 flex items-center space-x-2"
                 >
                   <span>Go to Dashboard</span>
                   <ArrowRight className="h-5 w-5" />
@@ -94,7 +94,7 @@ const LandingPage: React.FC = () => {
               
               <Link 
                 href="/universities"
-                className="btn-secondary text-lg px-8 py-3"
+                className="btn-ghost text-lg px-8 py-3"
               >
                 View Universities
               </Link>
@@ -107,10 +107,10 @@ const LandingPage: React.FC = () => {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white mt-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="heading-display text-3xl md:text-4xl mb-4">
               Why Choose EduPayChain?
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="subheading-muted text-xl max-w-2xl mx-auto">
               Experience the future of education payments with our comprehensive 
               blockchain-based solution.
             </p>
@@ -120,7 +120,7 @@ const LandingPage: React.FC = () => {
             {features.map((feature, index) => (
               <div 
                 key={index}
-                className="bg-gray-50 rounded-xl p-6 card-hover"
+                className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm card-hover"
               >
                 <div className="mb-4">
                   {feature.icon}
@@ -128,7 +128,7 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600">
+                <p className="subheading-muted">
                   {feature.description}
                 </p>
               </div>
@@ -141,10 +141,10 @@ const LandingPage: React.FC = () => {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="heading-display text-3xl md:text-4xl mb-4">
               How It Works
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="subheading-muted text-xl max-w-2xl mx-auto">
               Simple steps to complete your university fee payment and receive your certificate.
             </p>
           </div>
@@ -155,7 +155,7 @@ const LandingPage: React.FC = () => {
                 1
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Connect Wallet</h3>
-              <p className="text-gray-600">Connect your MetaMask wallet to get started</p>
+              <p className="subheading-muted">Connect your MetaMask wallet to get started</p>
             </div>
 
             <div className="text-center">
@@ -163,7 +163,7 @@ const LandingPage: React.FC = () => {
                 2
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Register as Student</h3>
-              <p className="text-gray-600">Complete one-time registration to link your wallet</p>
+              <p className="subheading-muted">Complete one-time registration to link your wallet</p>
             </div>
 
             <div className="text-center">
@@ -171,7 +171,7 @@ const LandingPage: React.FC = () => {
                 3
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Select University</h3>
-              <p className="text-gray-600">Choose your university and course from the list</p>
+              <p className="subheading-muted">Choose your university and course from the list</p>
             </div>
 
             <div className="text-center">
@@ -179,7 +179,7 @@ const LandingPage: React.FC = () => {
                 4
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Pay Fees</h3>
-              <p className="text-gray-600">Pay your fees using ERC-20 tokens securely</p>
+              <p className="subheading-muted">Pay your fees using ERC-20 tokens securely</p>
             </div>
 
             <div className="text-center">
@@ -187,7 +187,7 @@ const LandingPage: React.FC = () => {
                 5
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Get Certificate</h3>
-              <p className="text-gray-600">Receive your NFT certificate after verification</p>
+              <p className="subheading-muted">Receive your NFT certificate after verification</p>
             </div>
           </div>
         </div>

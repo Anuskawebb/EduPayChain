@@ -47,14 +47,24 @@ const Navigation: React.FC = () => {
   };
 
   return (
-    <nav className="bg-white shadow-lg border-b border-gray-200">
+    <nav className="nav-surface">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and Brand */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <GraduationCap className="h-8 w-8 text-primary-600" />
-              <span className="text-xl font-bold gradient-text">EduPayChain</span>
+            <Link href="/" className="flex items-center">
+              {/* Gradient graduation cap icon */}
+              <svg className="logo-cap" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Home">
+                <defs>
+                  <linearGradient id="capGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#5b7cfa" />
+                    <stop offset="100%" stopColor="#6c5ce7" />
+                  </linearGradient>
+                </defs>
+                <path d="M24 6L4 14l20 8 20-8-20-8z" fill="url(#capGrad)"/>
+                <path d="M10 22v6c0 2 7 6 14 6s14-4 14-6v-6l-14 6-14-6z" fill="#e6e9ff"/>
+                <circle cx="40" cy="23" r="2.5" fill="#6c5ce7"/>
+              </svg>
             </Link>
           </div>
 
@@ -62,33 +72,33 @@ const Navigation: React.FC = () => {
           <div className="hidden md:flex items-center space-x-8">
             <Link 
               href="/" 
-              className="text-gray-700 hover:text-primary-600 transition-colors duration-200"
+              className="nav-link transition-colors duration-200"
             >
               Home
             </Link>
             <Link 
               href="/student" 
-              className="text-gray-700 hover:text-primary-600 transition-colors duration-200"
+              className="nav-link transition-colors duration-200"
             >
               Student Dashboard
             </Link>
             <Link 
               href="/student/register" 
-              className="text-gray-700 hover:text-primary-600 transition-colors duration-200"
+              className="nav-link transition-colors duration-200"
             >
               Student Registration
             </Link>
             {isAdmin && (
               <Link 
                 href="/admin" 
-                className="text-gray-700 hover:text-primary-600 transition-colors duration-200"
+                className="nav-link transition-colors duration-200"
               >
                 Admin Dashboard
               </Link>
             )}
             <Link 
               href="/universities" 
-              className="text-gray-700 hover:text-primary-600 transition-colors duration-200"
+              className="nav-link transition-colors duration-200"
             >
               Universities
             </Link>
@@ -119,17 +129,13 @@ const Navigation: React.FC = () => {
             <button
               onClick={handleWalletAction}
               disabled={isLoading}
-              className="flex items-center space-x-1 sm:space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-2 sm:px-4 py-2 rounded-lg transition-colors duration-200 disabled:opacity-50 text-xs sm:text-sm"
+              className="nav-pill text-xs sm:text-sm disabled:opacity-50"
             >
-              <Wallet className="h-4 w-4" />
-              <span className="whitespace-nowrap">
-                {isLoading 
-                  ? 'Connecting...' 
-                  : isConnected 
-                    ? formatAddress(address!) 
-                    : 'Connect Wallet'
-                }
-              </span>
+              {isLoading 
+                ? 'Connecting...'
+                : isConnected 
+                  ? formatAddress(address!) 
+                  : 'Connect Wallet'}
             </button>
 
             {/* Mobile menu button */}
