@@ -56,7 +56,7 @@ const LandingPage: React.FC = () => {
       <Navigation />
       
       {/* Hero Section */}
-      <section className="relative pt-36 pb-12 px-4 sm:px-6 lg:px-8 mb-16 mt-20">
+      <section className="relative min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">

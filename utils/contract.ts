@@ -10,7 +10,7 @@ declare global {
 
 // Contract configuration
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0xc237d6594ff60f422bfd4bf46ff4d88775cac075';
-const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_ADDRESS || '0x92f6D0Aed727EaFCDbdd020899415E72DAb93A0d';
+const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_ADDRESS || '0x1Cf2eC0D98DF46f56AC9FA89AdCD0Cc5c0dC46c7';
 
 // Initialize provider
 const getProvider = () => {

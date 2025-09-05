@@ -101,7 +101,7 @@ async function testPayment() {
     const tokenAddress = await contract.token();
     
     // Test parameters
-    const testUniversity = '0x92f6D0Aed727EaFCDbdd020899415E72DAb93A0d'; // Admin address as test
+    const testUniversity = '0x1Cf2eC0D98DF46f56AC9FA89AdCD0Cc5c0dC46c7'; // Admin address as test
     const testAmount = ethers.parseEther('0.001'); // Small amount
     const testMetadata = JSON.stringify({
       name: 'Test Certificate',
