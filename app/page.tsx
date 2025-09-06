@@ -177,12 +177,9 @@ const LandingPage: React.FC = () => {
           </div>
 
           <div className="max-w-7xl mx-auto">
-            <div className="relative px-8 md:px-0">
+            <div className="relative">
               {/* Central line */}
-              <div className="timeline-line absolute left-1/2 transform -translate-x-1/2 w-1 h-full rounded-full hidden md:block"></div>
-              
-              {/* Mobile timeline line */}
-              <div className="timeline-line absolute left-8 w-1 h-full rounded-full md:hidden"></div>
+              <div className="timeline-line absolute left-1/2 transform -translate-x-1/2 w-1 h-full rounded-full"></div>
               
               {/* Steps */}
               {[
@@ -223,18 +220,14 @@ const LandingPage: React.FC = () => {
                 }
               ].map((stepData, index) => (
                 <div key={stepData.step} className="relative mb-16 group">
-                  {/* Step circle - positioned in center initially, moves on group hover */}
-                  <div className={`step-number-circle absolute top-0 w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xl z-20 shadow-lg left-8 -translate-x-8 md:left-1/2 md:-translate-x-8 ${
-                    stepData.side === 'left' 
-                      ? 'group-hover:left-0 group-hover:translate-x-2' 
-                      : 'group-hover:left-full group-hover:-translate-x-18'
-                  }`}>
+                  {/* Step circle - always positioned in center */}
+                  <div className="step-number-circle absolute top-0 left-1/2 -translate-x-1/2 w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xl z-20 shadow-lg">
                     {stepData.step}
                   </div>
                   
                   {/* Content */}
-                  <div className={`flex ${stepData.side === 'left' ? 'justify-start' : 'justify-end'} md:${stepData.side === 'left' ? 'justify-start' : 'justify-end'}`}>
-                    <div className={`w-full md:w-2/5 ${stepData.side === 'left' ? 'pl-24 pr-4 md:pr-24 md:pl-0' : 'pr-24 pl-4 md:pl-24 md:pr-0'}`}>
+                  <div className={`flex ${stepData.side === 'left' ? 'justify-start' : 'justify-end'}`}>
+                    <div className={`w-full md:w-2/5 ${stepData.side === 'left' ? 'pr-8 md:pr-8' : 'pl-8 md:pl-8'}`}>
                       <div className="step-card-new p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer relative">
                         <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
                           {stepData.title}

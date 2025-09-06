@@ -304,29 +304,11 @@ a {
   transform: translateY(-4px);
 }
 
-/* Step number animation styles */
+/* Step number styles - fixed in center */
 .step-number-circle {
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform, left;
-  animation: subtlePulse 2s ease-in-out infinite;
   position: absolute;
-}
-
-.step-number-circle:hover {
-  transform: scale(1.1);
-  box-shadow: 0 8px 25px rgba(91, 124, 250, 0.4);
-  animation: none;
-}
-
-/* Ensure step numbers don't overlap with cards */
-.step-number-circle.group-hover\:left-0 {
-  left: 0 !important;
-  transform: translateX(0.5rem) !important;
-}
-
-.step-number-circle.group-hover\:left-full {
-  left: 100% !important;
-  transform: translateX(-4.5rem) !important;
+  border: 3px solid white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 /* Mobile responsiveness for timeline */
@@ -346,26 +328,9 @@ a {
   }
 }
 
-/* Additional positioning fixes for step numbers */
-.step-number-circle {
-  border: 3px solid white;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-/* Ensure step numbers are always outside cards */
+/* Ensure step numbers are always visible */
 .group:hover .step-number-circle {
   z-index: 30;
-}
-
-@keyframes subtlePulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 4px 15px rgba(91, 124, 250, 0.2);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(91, 124, 250, 0.3);
-  }
 }
 
 /* Enhanced timeline line with gradient animation */
