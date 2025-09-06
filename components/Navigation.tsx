@@ -52,7 +52,7 @@ const Navigation: React.FC = () => {
         <div className="flex justify-between h-16">
           {/* Logo and Brand */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center">
+            <Link href="/" className="flex items-center -ml-2">
               {/* Gradient graduation cap icon */}
               <svg className="logo-cap" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Home">
                 <defs>
@@ -150,25 +150,30 @@ const Navigation: React.FC = () => {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
+          <div className="md:hidden fixed inset-0 z-50">
+            {/* Backdrop */}
+            <div className="fixed inset-0 bg-black/50" onClick={() => setIsMobileMenuOpen(false)}></div>
+            
+            {/* Menu Panel */}
+            <div className="fixed right-0 top-0 h-full w-80 bg-white/95 backdrop-blur-md border-l border-gray-200/20 shadow-2xl transform transition-transform duration-300 ease-in-out">
+              <div className="px-6 pt-6 pb-4 space-y-4">
               <Link 
                 href="/" 
-                className="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                className="block px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-lg font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Home
               </Link>
               <Link 
                 href="/student" 
-                className="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                className="block px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-lg font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Student Dashboard
               </Link>
               <Link 
                 href="/student/register" 
-                className="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                className="block px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-lg font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Student Registration
@@ -176,7 +181,7 @@ const Navigation: React.FC = () => {
               {isAdmin && (
                 <Link 
                   href="/admin" 
-                  className="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                  className="block px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-lg font-medium"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Admin Dashboard
@@ -184,11 +189,12 @@ const Navigation: React.FC = () => {
               )}
               <Link 
                 href="/universities" 
-                className="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                className="block px-4 py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-lg font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Universities
               </Link>
+              </div>
             </div>
           </div>
         )}

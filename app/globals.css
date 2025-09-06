@@ -100,7 +100,38 @@ a {
   z-index: 0;
 }
 
-/* Soft blue blobs in corners */
+/* Floating animation keyframes */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px);
+  }
+  50% {
+    transform: translateY(-10px) translateX(-5px);
+  }
+  75% {
+    transform: translateY(-30px) translateX(15px);
+  }
+}
+
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  25% {
+    transform: translateY(20px) translateX(-10px);
+  }
+  50% {
+    transform: translateY(10px) translateX(5px);
+  }
+  75% {
+    transform: translateY(30px) translateX(-15px);
+  }
+}
+
+/* Soft blue blobs in corners with floating animation */
 .hero-pattern::before {
   top: -60px;
   left: -60px;
@@ -109,6 +140,7 @@ a {
   background: radial-gradient(90% 90% at 50% 50%, rgba(99, 102, 241, 0.18) 0%, rgba(99, 102, 241, 0.03) 70%, rgba(99, 102, 241, 0) 100%);
   filter: blur(2px);
   border-radius: 50%;
+  animation: float 8s ease-in-out infinite;
 }
 
 .hero-pattern::after {
@@ -119,6 +151,7 @@ a {
   background: radial-gradient(90% 90% at 50% 50%, rgba(99, 102, 241, 0.16) 0%, rgba(99, 102, 241, 0.03) 70%, rgba(99, 102, 241, 0) 100%);
   filter: blur(2px);
   border-radius: 50%;
+  animation: floatReverse 10s ease-in-out infinite;
 }
 
 .heading-display {
@@ -261,6 +294,110 @@ a {
   box-shadow: 0 8px 25px rgba(91, 124, 250, 0.3);
 }
 
+/* New step card styles for timeline */
+.step-card-new {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.step-card-new:hover {
+  transform: translateY(-4px);
+}
+
+/* Step number animation styles */
+.step-number-circle {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, left;
+  animation: subtlePulse 2s ease-in-out infinite;
+  position: absolute;
+}
+
+.step-number-circle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(91, 124, 250, 0.4);
+  animation: none;
+}
+
+/* Ensure step numbers don't overlap with cards */
+.step-number-circle.group-hover\:left-0 {
+  left: 0 !important;
+  transform: translateX(0.5rem) !important;
+}
+
+.step-number-circle.group-hover\:left-full {
+  left: 100% !important;
+  transform: translateX(-4.5rem) !important;
+}
+
+/* Mobile responsiveness for timeline */
+@media (max-width: 768px) {
+  .step-number-circle {
+    width: 3rem;
+    height: 3rem;
+    font-size: 1rem;
+  }
+  
+  .step-card-new {
+    padding: 1rem;
+  }
+  
+  .timeline-line {
+    width: 2px;
+  }
+}
+
+/* Additional positioning fixes for step numbers */
+.step-number-circle {
+  border: 3px solid white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure step numbers are always outside cards */
+.group:hover .step-number-circle {
+  z-index: 30;
+}
+
+@keyframes subtlePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 15px rgba(91, 124, 250, 0.2);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(91, 124, 250, 0.3);
+  }
+}
+
+/* Enhanced timeline line with gradient animation */
+.timeline-line {
+  background: linear-gradient(180deg, #3b82f6 0%, #8b5cf6 50%, #3b82f6 100%);
+  background-size: 100% 200%;
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 0% 100%;
+  }
+}
+
+/* Timeline line animation */
+@keyframes drawLine {
+  from {
+    height: 0;
+  }
+  to {
+    height: 100%;
+  }
+}
+
+.timeline-line {
+  animation: drawLine 2s ease-in-out forwards;
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
@@ -296,27 +433,35 @@ html {
 /* Navbar styles to match reference */
 .nav-surface {
   background: transparent;
-  backdrop-filter: saturate(180%) blur(8px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.2);
+  backdrop-filter: none;
+  border-bottom: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
 }
 
 .nav-link {
-  color: #0f172a;
+  color: #334155;
+  font-weight: 500;
 }
 .nav-link:hover {
-  color: #1d4ed8;
+  color: #1e293b;
 }
 
 .nav-pill {
-  background: #eef4ff;
+  background: rgba(255, 255, 255, 0.9);
   color: #1d4ed8;
   border-radius: 9999px;
   padding: 10px 16px;
   font-weight: 600;
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 .nav-pill:hover {
-  background: #e2ebff;
+  background: rgba(255, 255, 255, 1);
   box-shadow: 0 6px 14px rgba(29, 78, 216, 0.15);
 }
 
